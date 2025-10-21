@@ -40,6 +40,8 @@ const App: React.FC = () => {
 
   const [availableWallets, setAvailableWallets] = useState<EIP6963ProviderDetail[]>([]);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
+  
+  const [allEvents, setAllEvents] = useState<any[]>([]);
 
   useEffect(() => {
     const onAnnounceProvider = (event: EIP6963AnnounceProviderEvent) => {
@@ -81,7 +83,6 @@ const App: React.FC = () => {
   
   const processEventData = useCallback(async (events: any[], contract: any, provider: any) => {
       // --- Process for Leaderboard ---
-      setIsLoadingCreators(true);
       const supplyByCreator = new Map<string, any>();
       events.forEach(event => {
         const { creator, supply } = event.args;
@@ -110,7 +111,6 @@ const App: React.FC = () => {
       setIsLoadingCreators(false);
 
       // --- Process for Chart ---
-      setIsLoadingChart(true);
       const blocks = await Promise.all(events.map(e => provider.getBlock(e.blockNumber)));
       const eventsWithTimestamps = events.map((event, index) => ({
           ...event,
@@ -148,10 +148,13 @@ const App: React.FC = () => {
       setIsLoadingChart(false);
   }, []);
 
-  const fetchAllChainData = useCallback(async () => {
+  const fetchInitialChainData = useCallback(async () => {
     if (!readOnlyProvider) return;
     try {
       setIsLoadingTokens(true);
+      setIsLoadingCreators(true);
+      setIsLoadingChart(true);
+
       const contract = new window.ethers.Contract(contractAddress, contractABI, readOnlyProvider);
 
       const fee = await contract.baseFee();
@@ -160,19 +163,8 @@ const App: React.FC = () => {
       const filter = contract.filters.TokenCreated();
       const pastEvents = await contract.queryFilter(filter, 'earliest');
       const sortedEvents = [...pastEvents].sort((a, b) => b.blockNumber - a.blockNumber);
-
-      const latestTokens = sortedEvents.slice(0, 10);
-      const formattedTokens: Token[] = latestTokens.map(event => ({
-        creator: event.args!.creator,
-        address: event.args!.tokenAddress,
-        name: event.args!.name,
-        symbol: event.args!.symbol,
-        supply: event.args!.supply.toString(),
-      }));
-      setTokens(formattedTokens);
-      setIsLoadingTokens(false);
       
-      await processEventData(sortedEvents, contract, readOnlyProvider);
+      setAllEvents(sortedEvents);
 
     } catch (error) {
       console.error("Error fetching chain data:", error);
@@ -180,7 +172,36 @@ const App: React.FC = () => {
       setIsLoadingCreators(false);
       setIsLoadingChart(false);
     }
-  }, [readOnlyProvider, processEventData]);
+  }, [readOnlyProvider]);
+  
+  useEffect(() => {
+    fetchInitialChainData();
+  }, [fetchInitialChainData]);
+
+  useEffect(() => {
+    if (!allEvents.length || !readOnlyProvider) return;
+
+    const processAllData = async () => {
+        const contract = new window.ethers.Contract(contractAddress, contractABI, readOnlyProvider);
+
+        // Process for Latest Tokens
+        const latestTokens = allEvents.slice(0, 10);
+        const formattedTokens: Token[] = latestTokens.map(event => ({
+          creator: event.args!.creator,
+          address: event.args!.tokenAddress,
+          name: event.args!.name,
+          symbol: event.args!.symbol,
+          supply: event.args!.supply.toString(),
+        }));
+        setTokens(formattedTokens);
+        setIsLoadingTokens(false);
+
+        // Process for Leaderboard and Chart
+        await processEventData(allEvents, contract, readOnlyProvider);
+    };
+
+    processAllData();
+  }, [allEvents, readOnlyProvider, processEventData]);
 
 
   useEffect(() => {
@@ -206,21 +227,23 @@ const App: React.FC = () => {
   
   useEffect(() => {
     if (!readOnlyProvider) return;
-
-    fetchAllChainData();
     
     const contract = new window.ethers.Contract(contractAddress, contractABI, readOnlyProvider);
     
-    const handleNewToken = (creator: string, tokenAddress: string, name: string, symbol: string, supply: any) => {
-      const newToken: Token = {
-        creator,
-        address: tokenAddress,
-        name,
-        symbol,
-        supply: supply.toString(),
-      };
-      setTokens(prevTokens => [newToken, ...prevTokens.slice(0, 9)]);
-      fetchAllChainData();
+    const handleNewToken = (...args: any[]) => {
+        const event = args[args.length - 1];
+        const newEventObject = {
+            ...event,
+            args: {
+                creator: args[0],
+                tokenAddress: args[1],
+                name: args[2],
+                symbol: args[3],
+                supply: args[4],
+                feePaid: args[5],
+            }
+        };
+        setAllEvents(prevEvents => [newEventObject, ...prevEvents]);
     };
 
     contract.on('TokenCreated', handleNewToken);
@@ -228,7 +251,7 @@ const App: React.FC = () => {
     return () => {
       contract.removeAllListeners('TokenCreated');
     };
-  }, [readOnlyProvider, fetchAllChainData]);
+  }, [readOnlyProvider]);
 
 
   return (

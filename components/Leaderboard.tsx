@@ -59,7 +59,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ creators, isLoading }) => {
                                 </span>
                             </td>
                             <td className="p-3 text-right font-medium">
-                                {Number(window.ethers.utils.formatUnits(creator.totalSupply, 0)).toLocaleString()}
+                                {Number(creator.totalSupply).toLocaleString()}
                             </td>
                         </tr>
                     ))}
