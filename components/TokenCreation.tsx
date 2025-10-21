@@ -56,6 +56,7 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
               supply: event.args.supply.toString(),
               address: event.args.tokenAddress,
               creator: event.args.creator,
+              txHash: receipt.transactionHash,
           };
           setNewTokenDetails(createdToken);
           setIsSuccessModalOpen(true);

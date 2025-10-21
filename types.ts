@@ -5,6 +5,7 @@ export interface Token {
   creator: string;
   address: string;
   supply: string;
+  txHash?: string;
 }
 
 export interface Creator {

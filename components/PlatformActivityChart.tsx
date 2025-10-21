@@ -99,7 +99,7 @@ const PlatformActivityChart: React.FC<PlatformActivityChartProps> = ({ chartData
   }
 
   return (
-    <Card title="Platform Activity (Last 30 Days)">
+    <Card title="Factory Activity (Last 30 Days)">
       <div className="relative h-64">
         {renderContent()}
       </div>

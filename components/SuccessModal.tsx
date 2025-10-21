@@ -54,6 +54,14 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, tokenDetai
                     {abbreviateAddress(tokenDetails.address)}
                 </a>
             </div>
+            {tokenDetails.txHash && (
+              <div className="flex justify-between items-center">
+                  <span className="text-base-text-secondary">Transaction Hash:</span>
+                  <a href={`https://basescan.org/tx/${tokenDetails.txHash}`} target="_blank" rel="noopener noreferrer" className="text-base-blue hover:underline font-mono text-sm">
+                      {abbreviateAddress(tokenDetails.txHash)}
+                  </a>
+              </div>
+            )}
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4">

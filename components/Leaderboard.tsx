@@ -70,7 +70,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ creators, isLoading }) => {
   }
 
   return (
-    <Card title="Creators Leaderboard">
+    <Card title="Factory Leaderboard">
       {renderContent()}
     </Card>
   );

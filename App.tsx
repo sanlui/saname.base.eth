@@ -283,6 +283,18 @@ const App: React.FC = () => {
       </main>
       <footer className="text-center py-6 text-base-text-secondary">
         <p>&copy; 2024 Base Token Factory. All Rights Reserved.</p>
+        <p className="text-xs mt-2 max-w-2xl mx-auto px-4">
+            This platform exclusively tracks tokens created with the contract at address{' '}
+            <a 
+                href={`https://basescan.org/address/${contractAddress}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-base-blue hover:underline font-mono"
+            >
+                {contractAddress}
+            </a>
+            {' '}on the Base network.
+        </p>
       </footer>
       <WalletSelectionModal
         isOpen={isWalletModalOpen}

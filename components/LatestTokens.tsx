@@ -68,7 +68,7 @@ const LatestTokens: React.FC<LatestTokensProps> = ({ tokens, isLoading }) => {
   }
 
   return (
-    <Card title="Latest Tokens Created">
+    <Card title="Latest Tokens from this Factory">
       {renderContent()}
     </Card>
   );
