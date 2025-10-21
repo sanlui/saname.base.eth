@@ -4,10 +4,11 @@ import Card from './Card';
 import SuccessModal from './SuccessModal';
 import { contractAddress, contractABI } from '../constants';
 import type { Token } from '../types';
+import { ethers } from 'ethers';
 
 interface TokenCreationProps {
   accountAddress: string | null;
-  provider: any; // Ethers Web3Provider
+  provider: ethers.providers.Web3Provider | null;
   baseFee: string | null;
   onTokenCreated: (event: any) => void;
 }

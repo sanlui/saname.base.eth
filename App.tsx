@@ -8,6 +8,7 @@ import PlatformActivityChart from './components/PlatformActivityChart';
 import WalletSelectionModal from './components/WalletSelectionModal';
 import { contractAddress, contractABI } from './constants';
 import type { Token, Creator, EIP6963ProviderDetail, EIP6963AnnounceProviderEvent } from './types';
+import { ethers } from 'ethers';
 
 declare global {
   interface Window {
@@ -25,11 +26,10 @@ interface ChartData {
   }[];
 }
 
-
 const App: React.FC = () => {
   const [accountAddress, setAccountAddress] = useState<string | null>(null);
-  const [provider, setProvider] = useState<any>(null);
-  const [readOnlyProvider, setReadOnlyProvider] = useState<any>(null);
+  const [provider, setProvider] = useState<ethers.providers.Web3Provider | null>(null);
+  const [readOnlyProvider, setReadOnlyProvider] = useState<ethers.providers.FallbackProvider | null>(null);
   const [tokens, setTokens] = useState<Token[]>([]);
   const [isLoadingTokens, setIsLoadingTokens] = useState(true);
   const [creators, setCreators] = useState<Creator[]>([]);
@@ -38,17 +38,18 @@ const App: React.FC = () => {
   const [isLoadingChart, setIsLoadingChart] = useState(true);
   const [baseFee, setBaseFee] = useState<string | null>(null);
   const [allEventsWithTimestamps, setAllEventsWithTimestamps] = useState<any[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [availableWallets, setAvailableWallets] = useState<EIP6963ProviderDetail[]>([]);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
-  
 
   useEffect(() => {
     if (window.ethers) {
         const providers = [
             new window.ethers.providers.JsonRpcProvider('https://mainnet.base.org'),
             new window.ethers.providers.JsonRpcProvider('https://base.publicnode.com'),
-            new window.ethers.providers.JsonRpcProvider('https://base-mainnet.public.blastapi.io'),
+            new window.ethers.providers.JsonRpcProvider('https://rpc.ankr.com/base'),
+            new window.ethers.providers.JsonRpcProvider('https://base.drpc.org'),
         ];
         const fallbackProvider = new window.ethers.providers.FallbackProvider(providers, 1);
         setReadOnlyProvider(fallbackProvider);
@@ -88,7 +89,7 @@ const App: React.FC = () => {
     }
   };
   
-  const processDataFromTimestampedEvents = useCallback(async (events: any[], contract: any) => {
+  const processDataFromTimestampedEvents = useCallback(async (events: any[], contract: ethers.Contract) => {
       setIsLoadingTokens(true);
       setIsLoadingCreators(true);
       setIsLoadingChart(true);
@@ -106,17 +107,17 @@ const App: React.FC = () => {
       setIsLoadingTokens(false);
       
       // --- Process for Leaderboard ---
-      const supplyByCreator = new Map<string, any>();
+      const supplyByCreator = new Map<string, ethers.BigNumber>();
       events.forEach(event => {
         const { creator, supply } = event.args;
         if (supplyByCreator.has(creator)) {
-          supplyByCreator.set(creator, supplyByCreator.get(creator).add(supply));
+          supplyByCreator.set(creator, supplyByCreator.get(creator)!.add(supply));
         } else {
           supplyByCreator.set(creator, supply);
         }
       });
       const sortedCreators = Array.from(supplyByCreator.entries())
-        .sort(([, a], [, b]) => b.sub(a).isNegative() ? -1 : 1)
+        .sort(([, a], [, b]) => (b.gt(a) ? 1 : -1))
         .slice(0, 10);
       
       const topCreatorsWithBadges: Creator[] = await Promise.all(
@@ -165,8 +166,10 @@ const App: React.FC = () => {
       setIsLoadingChart(false);
   }, []);
 
-  const fetchInitialChainData = useCallback(async () => {
+  const fetchInitialChainData = useCallback(async (isRefresh: boolean = false) => {
     if (!readOnlyProvider) return;
+    if(isRefresh) setIsRefreshing(true);
+    
     try {
       setIsLoadingTokens(true);
       setIsLoadingCreators(true);
@@ -174,19 +177,36 @@ const App: React.FC = () => {
 
       const contract = new window.ethers.Contract(contractAddress, contractABI, readOnlyProvider);
 
-      const fee = await contract.baseFee();
-      setBaseFee(window.ethers.utils.formatEther(fee));
-
-      const filter = contract.filters.TokenCreated();
-      const pastEvents = await contract.queryFilter(filter, 'earliest');
+      if (!baseFee) {
+        const fee = await contract.baseFee();
+        setBaseFee(window.ethers.utils.formatEther(fee));
+      }
       
-      const blocks = await Promise.all(pastEvents.map(e => readOnlyProvider.getBlock(e.blockNumber)));
-      const eventsWithTimestamps = pastEvents.map((event, index) => ({
+      const filter = contract.filters.TokenCreated();
+      const latestBlock = await readOnlyProvider.getBlockNumber();
+      const startingBlock = 0; // Or a more recent block number for performance
+      const chunkSize = 20000;
+      let pastEvents = [];
+
+      for (let i = startingBlock; i <= latestBlock; i += chunkSize) {
+          const fromBlock = i;
+          const toBlock = Math.min(i + chunkSize - 1, latestBlock);
+          const chunkEvents = await contract.queryFilter(filter, fromBlock, toBlock);
+          pastEvents.push(...chunkEvents);
+      }
+      
+      const blockNumbers = [...new Set(pastEvents.map(e => e.blockNumber))];
+      const blockMap = new Map<number, ethers.providers.Block>();
+      const blockPromises = blockNumbers.map(num => readOnlyProvider.getBlock(num));
+      const resolvedBlocks = await Promise.all(blockPromises);
+      resolvedBlocks.forEach(block => blockMap.set(block.number, block));
+
+      const eventsWithTimestamps = pastEvents.map(event => ({
         ...event,
-        timestamp: blocks[index].timestamp * 1000,
+        timestamp: blockMap.get(event.blockNumber)!.timestamp * 1000,
       }));
       
-      const sortedEvents = [...eventsWithTimestamps].sort((a, b) => b.blockNumber - a.blockNumber);
+      const sortedEvents = [...eventsWithTimestamps].sort((a, b) => b.blockNumber - a.blockNumber || b.logIndex - a.logIndex);
       
       setAllEventsWithTimestamps(sortedEvents);
 
@@ -195,14 +215,17 @@ const App: React.FC = () => {
       setIsLoadingTokens(false);
       setIsLoadingCreators(false);
       setIsLoadingChart(false);
+    } finally {
+      if(isRefresh) setIsRefreshing(false);
     }
-  }, [readOnlyProvider]);
+  }, [readOnlyProvider, baseFee]);
   
   useEffect(() => {
-    fetchInitialChainData();
-  }, [fetchInitialChainData]);
+    if(readOnlyProvider) {
+      fetchInitialChainData();
+    }
+  }, [readOnlyProvider, fetchInitialChainData]);
 
-  // This effect runs whenever the raw event data changes, ensuring the UI is always in sync.
   useEffect(() => {
     if (allEventsWithTimestamps.length > 0 && readOnlyProvider) {
         const contract = new window.ethers.Contract(contractAddress, contractABI, readOnlyProvider);
@@ -220,12 +243,12 @@ const App: React.FC = () => {
       }
     };
 
-    if (provider?.provider) {
+    if (provider?.provider.on) {
         provider.provider.on('accountsChanged', handleAccountsChanged);
     }
 
     return () => {
-      if (provider?.provider) {
+      if (provider?.provider.removeListener) {
         provider.provider.removeListener('accountsChanged', handleAccountsChanged);
       }
     };
@@ -273,7 +296,6 @@ const App: React.FC = () => {
     };
   }, [readOnlyProvider, onTokenCreated]);
 
-
   return (
     <div className="min-h-screen bg-base-dark font-sans">
       <Header onConnectWallet={handleConnectWallet} accountAddress={accountAddress} />
@@ -288,7 +310,12 @@ const App: React.FC = () => {
           <LatestTokens tokens={tokens} isLoading={isLoadingTokens} />
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
-              <Leaderboard creators={creators} isLoading={isLoadingCreators} />
+              <Leaderboard 
+                creators={creators} 
+                isLoading={isLoadingCreators} 
+                onRefresh={() => fetchInitialChainData(true)}
+                isRefreshing={isRefreshing}
+              />
             </div>
             <div>
               <PlatformActivityChart chartData={chartData} isLoading={isLoadingChart} />
