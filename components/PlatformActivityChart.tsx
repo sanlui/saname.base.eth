@@ -51,22 +51,27 @@ const PlatformActivityChart: React.FC<PlatformActivityChartProps> = ({ chartData
                     enabled: true,
                     mode: 'index',
                     intersect: false,
-                    backgroundColor: '#1E293B',
-                    titleColor: '#E2E8F0',
-                    bodyColor: '#94A3B8',
-                    borderColor: '#0052FF',
+                    backgroundColor: '#161B22',
+                    titleColor: '#E6EDF3',
+                    bodyColor: '#7D8590',
+                    borderColor: '#30363D',
                     borderWidth: 1,
+                    padding: 10,
+                    cornerRadius: 8,
+                    bodyFont: { family: 'Inter' },
+                    titleFont: { family: 'Inter', weight: 'bold' }
                 }
             },
             scales: {
               y: {
                 beginAtZero: true,
                 grid: {
-                  color: 'rgba(148, 163, 184, 0.2)',
+                  color: '#30363D',
                 },
                 ticks: {
-                    color: '#94A3B8',
+                    color: '#7D8590',
                     precision: 0,
+                    font: { family: 'Inter' }
                 }
               },
               x: {
@@ -74,7 +79,8 @@ const PlatformActivityChart: React.FC<PlatformActivityChartProps> = ({ chartData
                   display: false,
                 },
                 ticks: {
-                    color: '#94A3B8',
+                    color: '#7D8590',
+                    font: { family: 'Inter' }
                 }
               }
             }
@@ -93,17 +99,17 @@ const PlatformActivityChart: React.FC<PlatformActivityChartProps> = ({ chartData
   
   const renderContent = () => {
       if (isLoading) {
-          return <div className="absolute inset-0 flex items-center justify-center text-base-text-secondary"><p>Loading chart data...</p></div>;
+          return <div className="absolute inset-0 flex items-center justify-center text-text-secondary"><p>Loading chart data...</p></div>;
       }
       if (!chartData || chartData.datasets[0].data.every(d => d === 0)) {
-           return <div className="absolute inset-0 flex items-center justify-center text-base-text-secondary"><p>No activity in the last 7 days.</p></div>;
+           return <div className="absolute inset-0 flex items-center justify-center text-text-secondary"><p>No activity in the last 7 days.</p></div>;
       }
       return <canvas ref={chartRef}></canvas>;
   }
 
   return (
-    <Card title="Platform Activity">
-      <div className="relative h-64">
+    <Card title="Platform Activity (7 Days)">
+      <div className="relative h-64 md:h-full">
         {renderContent()}
       </div>
     </Card>

@@ -3,18 +3,43 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Create your own custom ERC20 tokens on the Base network instantly. Use our decentralized application to deploy tokens, view the latest creations, and see top creators." />
     <title>Base Token Factory</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         theme: {
           extend: {
             colors: {
-              'base-blue': '#0052FF',
-              'base-dark': '#0F172A',
-              'base-light-dark': '#1E293B',
-              'base-text': '#E2E8F0',
-              'base-text-secondary': '#94A3B8',
+              'background': '#0D1117',
+              'surface': '#161B22',
+              'primary': '#3B82F6', // blue-500
+              'primary-hover': '#60A5FA', // blue-400
+              'text-primary': '#E6EDF3',
+              'text-secondary': '#7D8590',
+              'border': '#30363D',
+              'success': '#238636',
+              'error': '#DA3633',
+              'info': '#1F6FEB',
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              display: ['Sora', 'sans-serif'],
+            },
+            boxShadow: {
+              'glow': '0 0 20px rgba(59, 130, 246, 0.2)',
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: 0, transform: 'translateY(-10px)' },
+                '100%': { opacity: 1, transform: 'translateY(0)' },
+              }
+            },
+            animation: {
+              'fade-in': 'fadeIn 0.5s ease-out forwards',
             }
           }
         }
@@ -31,7 +56,7 @@
 }
 </script>
 </head>
-  <body class="bg-base-dark text-base-text">
+  <body class="bg-background text-text-primary font-sans">
     <div id="root"></div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="module" src="/index.tsx"></script>

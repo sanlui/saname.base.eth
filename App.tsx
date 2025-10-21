@@ -127,11 +127,12 @@ const App: React.FC = () => {
 
       const labels = [];
       const data = [];
+      const today = new Date();
       for (let i = 6; i >= 0; i--) {
-          const d = new Date();
+          const d = new Date(today);
           d.setDate(d.getDate() - i);
           const dateString = d.toISOString().split('T')[0];
-          labels.push(`Day ${7 - i}`);
+          labels.push(d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
           data.push(dailyCounts.get(dateString) || 0);
       }
 
@@ -141,13 +142,16 @@ const App: React.FC = () => {
               label: 'Tokens Created',
               data,
               backgroundColor: context => {
-                const ctx = context.chart.ctx;
-                const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-                gradient.addColorStop(0, 'rgba(0, 82, 255, 0.5)');
-                gradient.addColorStop(1, 'rgba(0, 82, 255, 0)');
+                if (!context.chart.chartArea) {
+                  return;
+                }
+                const {ctx, chartArea: {top, bottom}} = context.chart;
+                const gradient = ctx.createLinearGradient(0, top, 0, bottom);
+                gradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)');
+                gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
                 return gradient;
               },
-              borderColor: '#0052FF',
+              borderColor: '#3B82F6',
               fill: true,
               tension: 0.4,
           }]
@@ -313,10 +317,10 @@ const App: React.FC = () => {
   }, [readOnlyProvider, onTokenCreated]);
 
   return (
-    <div className="min-h-screen bg-base-dark font-sans">
+    <div className="min-h-screen bg-background font-sans">
       <Header onConnectWallet={handleConnectWallet} accountAddress={accountAddress} />
-      <main className="container mx-auto px-4 py-8">
-        <div className="space-y-8">
+      <main className="container mx-auto px-4 py-12">
+        <div className="space-y-12">
           <TokenCreation 
             accountAddress={accountAddress} 
             provider={provider} 
@@ -324,8 +328,8 @@ const App: React.FC = () => {
             onTokenCreated={onTokenCreated}
           />
           <LatestTokens tokens={tokens} isLoading={isLoadingTokens} />
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <div className="lg:col-span-3">
               <Leaderboard 
                 creators={creators} 
                 isLoading={isLoadingCreators} 
@@ -333,26 +337,28 @@ const App: React.FC = () => {
                 isRefreshing={isRefreshing}
               />
             </div>
-            <div>
+            <div className="lg:col-span-2">
               <PlatformActivityChart chartData={chartData} isLoading={isLoadingChart} />
             </div>
           </div>
         </div>
       </main>
-      <footer className="text-center py-6 text-base-text-secondary">
-        <p>&copy; 2024 Base Token Factory. All Rights Reserved.</p>
-        <p className="text-xs mt-2 max-w-2xl mx-auto px-4">
-            This platform exclusively tracks tokens created with the contract at address{' '}
-            <a 
-                href={`https://basescan.org/address/${contractAddress}`} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-base-blue hover:underline font-mono"
-            >
-                {contractAddress}
-            </a>
-            {' '}on the Base network.
-        </p>
+      <footer className="border-t border-border mt-16">
+        <div className="container mx-auto px-4 py-8 text-center text-text-secondary">
+            <p>&copy; 2024 Base Token Factory. All Rights Reserved.</p>
+            <p className="text-xs mt-3 max-w-2xl mx-auto">
+                This platform exclusively tracks tokens created with the contract at address{' '}
+                <a 
+                    href={`https://basescan.org/address/${contractAddress}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline font-mono"
+                >
+                    {contractAddress}
+                </a>
+                {' '}on the Base network.
+            </p>
+        </div>
       </footer>
       <WalletSelectionModal
         isOpen={isWalletModalOpen}

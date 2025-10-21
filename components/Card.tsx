@@ -5,14 +5,15 @@ interface CardProps {
   title: string;
   children: React.ReactNode;
   action?: React.ReactNode;
+  className?: string;
 }
 
-const Card: React.FC<CardProps> = ({ title, children, action }) => {
+const Card: React.FC<CardProps> = ({ title, children, action, className = '' }) => {
   return (
-    <div className="bg-base-light-dark border border-slate-700 rounded-lg shadow-lg overflow-hidden">
+    <div className={`bg-surface border border-border rounded-xl shadow-lg ${className}`}>
       <div className="p-6">
-        <div className="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
-            <h2 className="text-xl font-bold text-base-text">{title}</h2>
+        <div className="flex justify-between items-center mb-4 border-b border-border pb-4">
+            <h2 className="text-xl font-bold text-text-primary font-display">{title}</h2>
             {action && <div>{action}</div>}
         </div>
         {children}

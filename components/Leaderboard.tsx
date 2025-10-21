@@ -18,33 +18,40 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ creators, isLoading, onRefres
   
   const renderContent = () => {
     if (isLoading && creators.length === 0) {
-        return <div className="text-center py-8 text-base-text-secondary"><p>Loading leaderboard...</p></div>;
+        return <div className="text-center py-8 text-text-secondary"><p>Loading leaderboard...</p></div>;
     }
 
     if (creators.length === 0) {
-        return <div className="text-center py-8 text-base-text-secondary"><p>No creators yet. Be the first!</p></div>;
+        return <div className="text-center py-8 text-text-secondary"><p>No creators yet. Be the first!</p></div>;
+    }
+
+    const getRankColor = (rank: number) => {
+      if (rank === 1) return 'text-amber-400';
+      if (rank === 2) return 'text-slate-300';
+      if (rank === 3) return 'text-amber-600';
+      return 'text-text-secondary';
     }
 
     return (
         <div className="overflow-x-auto">
             <table className="w-full text-left">
-                <thead className="border-b border-slate-700 text-base-text-secondary">
+                <thead className="border-b border-border text-text-secondary uppercase text-xs tracking-wider">
                     <tr>
-                        <th className="p-3">Rank</th>
-                        <th className="p-3">Creator Address</th>
-                        <th className="p-3 text-right">Tokens Created</th>
+                        <th className="p-4 text-center">Rank</th>
+                        <th className="p-4">Creator Address</th>
+                        <th className="p-4 text-right">Tokens Created</th>
                     </tr>
                 </thead>
                 <tbody>
                     {creators.map((creator) => (
-                        <tr key={creator.address} className="border-b border-slate-800 hover:bg-slate-700/50 transition-colors">
-                            <td className="p-3 font-bold text-lg">{creator.rank}</td>
-                            <td className="p-3 font-mono text-sm">
-                                <a href={`https://basescan.org/address/${creator.address}`} target="_blank" rel="noopener noreferrer" className="text-base-blue hover:underline">
+                        <tr key={creator.address} className="border-b border-border hover:bg-white/5 transition-colors">
+                            <td className={`p-4 font-bold text-lg text-center ${getRankColor(creator.rank)}`}>{creator.rank}</td>
+                            <td className="p-4 font-mono text-sm">
+                                <a href={`https://basescan.org/address/${creator.address}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                                     {abbreviateAddress(creator.address)}
                                 </a>
                             </td>
-                            <td className="p-3 text-right font-medium text-lg">
+                            <td className="p-4 text-right font-medium text-lg text-text-primary">
                                 {creator.tokensCreated.toLocaleString()}
                             </td>
                         </tr>
@@ -59,7 +66,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ creators, isLoading, onRefres
     <button
         onClick={onRefresh}
         disabled={isRefreshing}
-        className="text-sm text-base-blue hover:text-blue-400 disabled:text-slate-500 disabled:cursor-wait transition-colors flex items-center"
+        className="text-sm text-primary hover:text-primary-hover disabled:text-text-secondary disabled:cursor-wait transition-colors flex items-center"
     >
         <svg 
             className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} 
