@@ -46,8 +46,15 @@ const App: React.FC = () => {
   useEffect(() => {
     // Establish a stable, read-only connection to the blockchain immediately.
     if (window.ethers) {
-        const jsonRpcProvider = new window.ethers.providers.JsonRpcProvider('https://mainnet.base.org');
-        setReadOnlyProvider(jsonRpcProvider);
+        // Using a FallbackProvider to increase reliability by trying multiple public RPCs.
+        const providers = [
+            new window.ethers.providers.JsonRpcProvider('https://mainnet.base.org'),
+            new window.ethers.providers.JsonRpcProvider('https://base.publicnode.com'),
+            new window.ethers.providers.JsonRpcProvider('https://base-mainnet.public.blastapi.io'),
+        ];
+        // The quorum is 1, meaning we only need one provider to respond to consider it a success.
+        const fallbackProvider = new window.ethers.providers.FallbackProvider(providers, 1);
+        setReadOnlyProvider(fallbackProvider);
     }
     
     // Listen for wallet providers to populate the connection modal.
