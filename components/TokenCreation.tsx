@@ -17,6 +17,7 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
   const [tokenName, setTokenName] = useState('');
   const [tokenSymbol, setTokenSymbol] = useState('');
   const [tokenSupply, setTokenSupply] = useState('');
+  const [tokenDecimals, setTokenDecimals] = useState('18');
   const [isLoading, setIsLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
@@ -28,9 +29,10 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
         setFeedback({ type: 'error', message: 'Please connect your wallet first.' });
         return;
     }
-
-    if (!tokenName || !tokenSymbol || !tokenSupply || Number(tokenSupply) <= 0) {
-      setFeedback({ type: 'error', message: 'Please fill out all fields with valid values.' });
+    
+    const decimals = Number(tokenDecimals);
+    if (!tokenName || !tokenSymbol || !tokenSupply || Number(tokenSupply) <= 0 || !tokenDecimals || isNaN(decimals) || decimals < 0 || decimals > 18) {
+      setFeedback({ type: 'error', message: 'Please fill out all fields with valid values. Decimals must be between 0 and 18.' });
       return;
     }
 
@@ -41,7 +43,7 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
       const signer = await provider.getSigner();
       const contract = new Contract(contractAddress, contractABI, signer);
 
-      const supply = ethers.toBigInt(tokenSupply);
+      const supply = ethers.parseUnits(tokenSupply, decimals);
       const feeInWei = ethers.parseEther(baseFee || '0');
 
       const tx = await contract.createToken(tokenName, tokenSymbol, supply, { value: feeInWei });
@@ -75,6 +77,7 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
               address: parsedEvent.args.tokenAddress,
               creator: parsedEvent.args.creator,
               txHash: receipt.hash,
+              decimals: decimals,
           };
           setNewTokenDetails(createdToken);
           setIsSuccessModalOpen(true);
@@ -85,6 +88,7 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
       setTokenName('');
       setTokenSymbol('');
       setTokenSupply('');
+      setTokenDecimals('18');
       setFeedback(null);
 
     } catch (error: any) {
@@ -134,6 +138,10 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
             <label htmlFor="tokenSupply" className="block text-sm font-medium text-text-secondary mb-2">Total Supply</label>
             <input type="number" id="tokenSupply" value={tokenSupply} onChange={(e) => setTokenSupply(e.target.value)} placeholder="e.g., 1,000,000" min="1" className={inputStyles} />
           </div>
+           <div>
+              <label htmlFor="tokenDecimals" className="block text-sm font-medium text-text-secondary mb-2">Decimals</label>
+              <input type="number" id="tokenDecimals" value={tokenDecimals} onChange={(e) => setTokenDecimals(e.target.value)} placeholder="e.g., 18" min="0" max="18" className={inputStyles} />
+            </div>
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-2">Creation Fee</label>
               <div className="w-full bg-background border border-border rounded-lg p-3 flex justify-between items-center">

@@ -7,6 +7,7 @@ export interface Token {
   supply: string;
   timestamp?: number;
   txHash?: string;
+  decimals?: number;
 }
 
 export interface Creator {

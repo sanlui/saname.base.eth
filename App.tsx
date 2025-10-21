@@ -238,23 +238,6 @@ const App: React.FC = () => {
           <LatestTokens tokens={tokens} isLoading={isLoadingTokens} />
         </div>
       </main>
-      <footer className="border-t border-border mt-16">
-        <div className="container mx-auto px-4 py-8 text-center text-text-secondary">
-            <p>&copy; 2024 Base Token Factory. All Rights Reserved.</p>
-            <p className="text-xs mt-3 max-w-2xl mx-auto">
-                This platform exclusively tracks tokens created with the contract at address{' '}
-                <a 
-                    href={`https://basescan.org/address/${contractAddress}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline font-mono"
-                >
-                    {contractAddress}
-                </a>
-                {' '}on the Base network.
-            </p>
-        </div>
-      </footer>
       <WalletSelectionModal
         isOpen={isWalletModalOpen}
         onClose={() => setIsWalletModalOpen(false)}

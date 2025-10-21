@@ -1,6 +1,7 @@
 
 import React from 'react';
 import type { Token } from '../types';
+import { ethers } from 'ethers';
 
 interface SuccessModalProps {
   isOpen: boolean;
@@ -46,7 +47,11 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, tokenDetai
             </div>
             <div className="flex justify-between items-center">
                 <span className="text-text-secondary">Total Supply:</span>
-                <span className="font-medium text-text-primary">{Number(tokenDetails.supply).toLocaleString()}</span>
+                <span className="font-medium text-text-primary">
+                    {tokenDetails.decimals !== undefined 
+                        ? Number(ethers.formatUnits(tokenDetails.supply, tokenDetails.decimals)).toLocaleString() 
+                        : Number(tokenDetails.supply).toLocaleString()}
+                </span>
             </div>
              <div className="flex justify-between items-center">
                 <span className="text-text-secondary">Token Address:</span>
