@@ -3,24 +3,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import TokenCreation from './components/TokenCreation';
 import LatestTokens from './components/LatestTokens';
-import Leaderboard from './components/Leaderboard';
-import PlatformActivityChart from './components/PlatformActivityChart';
 import WalletSelectionModal from './components/WalletSelectionModal';
 import { contractAddress, contractABI } from './constants';
-import type { Token, Creator, EIP6963ProviderDetail, EIP6963AnnounceProviderEvent } from './types';
+import type { Token, EIP6963ProviderDetail, EIP6963AnnounceProviderEvent } from './types';
 import { ethers, Contract, BrowserProvider, JsonRpcProvider } from 'ethers';
-
-interface ChartData {
-  labels: string[];
-  datasets: {
-    label: string;
-    data: number[];
-    backgroundColor: any;
-    borderColor: string;
-    fill: boolean;
-    tension: number;
-  }[];
-}
 
 const App: React.FC = () => {
   const [accountAddress, setAccountAddress] = useState<string | null>(null);
@@ -28,14 +14,9 @@ const App: React.FC = () => {
   const [readOnlyProvider, setReadOnlyProvider] = useState<JsonRpcProvider | null>(null);
   const [tokens, setTokens] = useState<Token[]>([]);
   const [isLoadingTokens, setIsLoadingTokens] = useState(true);
-  const [creators, setCreators] = useState<Creator[]>([]);
-  const [isLoadingCreators, setIsLoadingCreators] = useState(true);
-  const [chartData, setChartData] = useState<ChartData | null>(null);
-  const [isLoadingChart, setIsLoadingChart] = useState(true);
   const [baseFee, setBaseFee] = useState<string | null>(null);
   const [allEventsWithTimestamps, setAllEventsWithTimestamps] = useState<any[]>([]);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
+  
   const [availableWallets, setAvailableWallets] = useState<EIP6963ProviderDetail[]>([]);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
 
@@ -80,8 +61,6 @@ const App: React.FC = () => {
   
   const processDataFromTimestampedEvents = useCallback(async (events: any[]) => {
       setIsLoadingTokens(true);
-      setIsLoadingCreators(true);
-      setIsLoadingChart(true);
 
       // --- Process for Latest Tokens (Screenshot UI) ---
       const latestTokens = events.slice(0, 10);
@@ -95,78 +74,13 @@ const App: React.FC = () => {
       }));
       setTokens(formattedTokens);
       setIsLoadingTokens(false);
-      
-      // --- Process for Leaderboard (Screenshot UI) ---
-      const tokensByCreator = new Map<string, number>();
-      events.forEach(event => {
-        const { creator } = event.args;
-        tokensByCreator.set(creator, (tokensByCreator.get(creator) || 0) + 1);
-      });
-
-      const sortedCreators = Array.from(tokensByCreator.entries())
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, 10);
-      
-      const topCreators: Creator[] = sortedCreators.map(([address, tokensCreated], index) => ({
-          rank: index + 1,
-          address,
-          tokensCreated: tokensCreated,
-      }));
-      setCreators(topCreators);
-      setIsLoadingCreators(false);
-
-      // --- Process for Chart (Screenshot UI: 7-day line chart) ---
-      const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-      const recentEvents = events.filter(e => e.timestamp >= sevenDaysAgo);
-
-      const dailyCounts = new Map<string, number>();
-      recentEvents.forEach(event => {
-          const date = new Date(event.timestamp).toISOString().split('T')[0];
-          dailyCounts.set(date, (dailyCounts.get(date) || 0) + 1);
-      });
-
-      const labels = [];
-      const data = [];
-      const today = new Date();
-      for (let i = 6; i >= 0; i--) {
-          const d = new Date(today);
-          d.setDate(d.getDate() - i);
-          const dateString = d.toISOString().split('T')[0];
-          labels.push(d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
-          data.push(dailyCounts.get(dateString) || 0);
-      }
-
-      setChartData({
-          labels,
-          datasets: [{
-              label: 'Tokens Created',
-              data,
-              backgroundColor: context => {
-                if (!context.chart.chartArea) {
-                  return;
-                }
-                const {ctx, chartArea: {top, bottom}} = context.chart;
-                const gradient = ctx.createLinearGradient(0, top, 0, bottom);
-                gradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)');
-                gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
-                return gradient;
-              },
-              borderColor: '#3B82F6',
-              fill: true,
-              tension: 0.4,
-          }]
-      });
-      setIsLoadingChart(false);
   }, []);
 
-  const fetchInitialChainData = useCallback(async (isRefresh: boolean = false) => {
+  const fetchInitialChainData = useCallback(async () => {
     if (!readOnlyProvider) return;
-    if(isRefresh) setIsRefreshing(true);
     
     try {
       setIsLoadingTokens(true);
-      setIsLoadingCreators(true);
-      setIsLoadingChart(true);
 
       const contract = new Contract(contractAddress, contractABI, readOnlyProvider);
 
@@ -219,10 +133,6 @@ const App: React.FC = () => {
     } catch (error) {
       console.error("Error fetching chain data:", error);
       setIsLoadingTokens(false);
-      setIsLoadingCreators(false);
-      setIsLoadingChart(false);
-    } finally {
-      if(isRefresh) setIsRefreshing(false);
     }
   }, [readOnlyProvider, baseFee]);
   
@@ -236,18 +146,16 @@ const App: React.FC = () => {
     if (allEventsWithTimestamps.length > 0) {
         processDataFromTimestampedEvents(allEventsWithTimestamps);
     } else {
-      const loadingStates = [isLoadingTokens, isLoadingCreators, isLoadingChart];
+      const loadingStates = [isLoadingTokens];
       if (loadingStates.some(Boolean)) {
          setTimeout(() => {
            if(allEventsWithTimestamps.length === 0) {
               setIsLoadingTokens(false);
-              setIsLoadingCreators(false);
-              setIsLoadingChart(false);
            }
          }, 2000);
       }
     }
-  }, [allEventsWithTimestamps, processDataFromTimestampedEvents, isLoadingTokens, isLoadingCreators, isLoadingChart]);
+  }, [allEventsWithTimestamps, processDataFromTimestampedEvents, isLoadingTokens]);
 
   useEffect(() => {
     const handleAccountsChanged = (accounts: string[]) => {
@@ -328,19 +236,6 @@ const App: React.FC = () => {
             onTokenCreated={onTokenCreated}
           />
           <LatestTokens tokens={tokens} isLoading={isLoadingTokens} />
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-            <div className="lg:col-span-3">
-              <Leaderboard 
-                creators={creators} 
-                isLoading={isLoadingCreators} 
-                onRefresh={() => fetchInitialChainData(true)}
-                isRefreshing={isRefreshing}
-              />
-            </div>
-            <div className="lg:col-span-2">
-              <PlatformActivityChart chartData={chartData} isLoading={isLoadingChart} />
-            </div>
-          </div>
         </div>
       </main>
       <footer className="border-t border-border mt-16">
