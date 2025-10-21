@@ -8,7 +8,7 @@ import PlatformActivityChart from './components/PlatformActivityChart';
 import WalletSelectionModal from './components/WalletSelectionModal';
 import { contractAddress, contractABI } from './constants';
 import type { Token, Creator, EIP6963ProviderDetail, EIP6963AnnounceProviderEvent } from './types';
-import { ethers, Contract, FallbackProvider, BrowserProvider, JsonRpcProvider } from 'ethers';
+import { ethers, Contract, BrowserProvider, JsonRpcProvider } from 'ethers';
 
 interface ChartData {
   labels: string[];
@@ -25,7 +25,7 @@ interface ChartData {
 const App: React.FC = () => {
   const [accountAddress, setAccountAddress] = useState<string | null>(null);
   const [provider, setProvider] = useState<BrowserProvider | null>(null);
-  const [readOnlyProvider, setReadOnlyProvider] = useState<FallbackProvider | null>(null);
+  const [readOnlyProvider, setReadOnlyProvider] = useState<JsonRpcProvider | null>(null);
   const [tokens, setTokens] = useState<Token[]>([]);
   const [isLoadingTokens, setIsLoadingTokens] = useState(true);
   const [creators, setCreators] = useState<Creator[]>([]);
@@ -40,15 +40,10 @@ const App: React.FC = () => {
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
 
   useEffect(() => {
-    const providers = [
-        new JsonRpcProvider('https://mainnet.base.org'),
-        new JsonRpcProvider('https://base.publicnode.com'),
-        new JsonRpcProvider('https://rpc.ankr.com/base'),
-        new JsonRpcProvider('https://base.drpc.org'),
-    ];
-    // Explicitly set the network to Base Mainnet (8453) to prevent "network changed" errors.
-    const fallbackProvider = new FallbackProvider(providers, 8453);
-    setReadOnlyProvider(fallbackProvider);
+    // Simplify to a single, reliable provider to avoid quorum issues and parallel request limits.
+    // Explicitly set the network to Base Mainnet (8453).
+    const provider = new JsonRpcProvider('https://base.publicnode.com', 8453);
+    setReadOnlyProvider(provider);
     
     const onAnnounceProvider = (event: EIP6963AnnounceProviderEvent) => {
       setAvailableWallets(prev => {
@@ -179,8 +174,8 @@ const App: React.FC = () => {
       const filter = await contract.filters.TokenCreated();
       const latestBlock = await readOnlyProvider.getBlockNumber();
       const startingBlock = 3713640;
-      // CRITICAL FIX: Reduce chunk size and add a delay to be compatible with free RPC providers.
-      const chunkSize = 500;
+      // CRITICAL FIX: Use a very conservative chunk size and delay to be compatible with free RPC providers.
+      const chunkSize = 499;
       let pastEvents = [];
 
       for (let i = startingBlock; i <= latestBlock; i += chunkSize) {
@@ -188,17 +183,25 @@ const App: React.FC = () => {
           const toBlock = Math.min(i + chunkSize - 1, latestBlock);
           const chunkEvents = await contract.queryFilter(filter, fromBlock, toBlock);
           pastEvents.push(...chunkEvents);
-          // Add a small delay to prevent rate-limiting
-          await new Promise(resolve => setTimeout(resolve, 500));
+          // Add a longer delay to prevent rate-limiting
+          await new Promise(resolve => setTimeout(resolve, 1000));
       }
       
       const blockNumbers = [...new Set(pastEvents.map(e => e.blockNumber))];
       const blockMap = new Map<number, any>();
-      const blockPromises = blockNumbers.map(num => readOnlyProvider.getBlock(num));
-      const resolvedBlocks = await Promise.all(blockPromises);
-      resolvedBlocks.forEach(block => {
-        if(block) blockMap.set(block.number, block)
-      });
+      
+      // CRITICAL FIX: Fetch block data in batches to avoid overwhelming the RPC provider with a burst of requests.
+      const blockBatchSize = 10;
+      for (let i = 0; i < blockNumbers.length; i += blockBatchSize) {
+        const batch = blockNumbers.slice(i, i + blockBatchSize);
+        const blockPromises = batch.map(num => readOnlyProvider.getBlock(num));
+        const resolvedBlocks = await Promise.all(blockPromises);
+        resolvedBlocks.forEach(block => {
+            if (block) blockMap.set(block.number, block);
+        });
+        // Add a delay between batches to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
 
       const eventsWithTimestamps = pastEvents.map(event => ({
         ...event,
