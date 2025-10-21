@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface HeaderProps {
@@ -11,10 +10,31 @@ const Header: React.FC<HeaderProps> = ({ onConnectWallet, accountAddress }) => {
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
   };
 
+  const handleLogoClick = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
+  const handleLogoKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      handleLogoClick();
+    }
+  };
+
   return (
     <header className="bg-surface/80 border-b border-border backdrop-blur-lg sticky top-0 z-40">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-text-primary font-display">
+        <h1
+          className="text-2xl font-bold text-text-primary font-display cursor-pointer"
+          onClick={handleLogoClick}
+          onKeyDown={handleLogoKeyDown}
+          role="button"
+          tabIndex={0}
+          aria-label="Go to top of page"
+        >
           <span className="text-primary">Base</span> Token Factory
         </h1>
         {accountAddress ? (
