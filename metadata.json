@@ -1,0 +1,5 @@
+{
+  "name": "Base Token Factory",
+  "description": "A decentralized application (dApp) for creating ERC20 tokens on the Base network. The app features a token creation form, a list of the latest tokens, a creator leaderboard, and a chart visualizing platform activity.",
+  "requestFramePermissions": []
+}
