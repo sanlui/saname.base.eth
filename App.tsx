@@ -15,7 +15,10 @@ interface ChartData {
   datasets: {
     label: string;
     data: number[];
-    backgroundColor: string;
+    backgroundColor: any;
+    borderColor: string;
+    fill: boolean;
+    tension: number;
   }[];
 }
 
@@ -80,12 +83,12 @@ const App: React.FC = () => {
     }
   };
   
-  const processDataFromTimestampedEvents = useCallback(async (events: any[], contract: Contract) => {
+  const processDataFromTimestampedEvents = useCallback(async (events: any[]) => {
       setIsLoadingTokens(true);
       setIsLoadingCreators(true);
       setIsLoadingChart(true);
 
-      // --- Process for Latest Tokens ---
+      // --- Process for Latest Tokens (Screenshot UI) ---
       const latestTokens = events.slice(0, 10);
       const formattedTokens: Token[] = latestTokens.map(event => ({
         creator: event.args!.creator,
@@ -93,11 +96,12 @@ const App: React.FC = () => {
         name: event.args!.name,
         symbol: event.args!.symbol,
         supply: event.args!.supply.toString(),
+        timestamp: event.timestamp,
       }));
       setTokens(formattedTokens);
       setIsLoadingTokens(false);
       
-      // --- Process for Leaderboard ---
+      // --- Process for Leaderboard (Screenshot UI) ---
       const tokensByCreator = new Map<string, number>();
       events.forEach(event => {
         const { creator } = event.args;
@@ -108,23 +112,17 @@ const App: React.FC = () => {
         .sort(([, a], [, b]) => b - a)
         .slice(0, 10);
       
-      const topCreatorsWithBadges: Creator[] = await Promise.all(
-        sortedCreators.map(async ([address, tokensCreated], index) => {
-          const badge = await contract.getBadge(address);
-          return {
-            rank: index + 1,
-            address,
-            tokensCreated: tokensCreated,
-            badge,
-          };
-        })
-      );
-      setCreators(topCreatorsWithBadges);
+      const topCreators: Creator[] = sortedCreators.map(([address, tokensCreated], index) => ({
+          rank: index + 1,
+          address,
+          tokensCreated: tokensCreated,
+      }));
+      setCreators(topCreators);
       setIsLoadingCreators(false);
 
-      // --- Process for Chart ---
-      const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-      const recentEvents = events.filter(e => e.timestamp >= thirtyDaysAgo);
+      // --- Process for Chart (Screenshot UI: 7-day line chart) ---
+      const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      const recentEvents = events.filter(e => e.timestamp >= sevenDaysAgo);
 
       const dailyCounts = new Map<string, number>();
       recentEvents.forEach(event => {
@@ -134,12 +132,11 @@ const App: React.FC = () => {
 
       const labels = [];
       const data = [];
-      for (let i = 29; i >= 0; i--) {
+      for (let i = 6; i >= 0; i--) {
           const d = new Date();
           d.setDate(d.getDate() - i);
           const dateString = d.toISOString().split('T')[0];
-          const monthDay = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-          labels.push(monthDay);
+          labels.push(`Day ${7 - i}`);
           data.push(dailyCounts.get(dateString) || 0);
       }
 
@@ -148,7 +145,16 @@ const App: React.FC = () => {
           datasets: [{
               label: 'Tokens Created',
               data,
-              backgroundColor: '#0052FF',
+              backgroundColor: context => {
+                const ctx = context.chart.ctx;
+                const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+                gradient.addColorStop(0, 'rgba(0, 82, 255, 0.5)');
+                gradient.addColorStop(1, 'rgba(0, 82, 255, 0)');
+                return gradient;
+              },
+              borderColor: '#0052FF',
+              fill: true,
+              tension: 0.4,
           }]
       });
       setIsLoadingChart(false);
@@ -170,9 +176,10 @@ const App: React.FC = () => {
         setBaseFee(ethers.formatEther(fee));
       }
       
-      const filter = contract.filters.TokenCreated();
+      const filter = await contract.filters.TokenCreated();
       const latestBlock = await readOnlyProvider.getBlockNumber();
-      const startingBlock = 0; // Or a more recent block number for performance
+      // CRITICAL FIX: Start scanning from the block the contract was deployed, not from block 0.
+      const startingBlock = 3713640;
       const chunkSize = 20000;
       let pastEvents = [];
 
@@ -185,9 +192,12 @@ const App: React.FC = () => {
       
       const blockNumbers = [...new Set(pastEvents.map(e => e.blockNumber))];
       const blockMap = new Map<number, any>();
+      // Optimization: Fetch each block only once
       const blockPromises = blockNumbers.map(num => readOnlyProvider.getBlock(num));
       const resolvedBlocks = await Promise.all(blockPromises);
-      resolvedBlocks.forEach(block => blockMap.set(block.number, block));
+      resolvedBlocks.forEach(block => {
+        if(block) blockMap.set(block.number, block)
+      });
 
       const eventsWithTimestamps = pastEvents.map(event => ({
         ...event,
@@ -215,11 +225,22 @@ const App: React.FC = () => {
   }, [readOnlyProvider, fetchInitialChainData]);
 
   useEffect(() => {
-    if (allEventsWithTimestamps.length > 0 && readOnlyProvider) {
-        const contract = new Contract(contractAddress, contractABI, readOnlyProvider);
-        processDataFromTimestampedEvents(allEventsWithTimestamps, contract);
+    if (allEventsWithTimestamps.length > 0) {
+        processDataFromTimestampedEvents(allEventsWithTimestamps);
+    } else {
+      // Handle case where queryFilter returns empty but isn't loading
+      const loadingStates = [isLoadingTokens, isLoadingCreators, isLoadingChart];
+      if (loadingStates.some(Boolean)) {
+         setTimeout(() => {
+           if(allEventsWithTimestamps.length === 0) {
+              setIsLoadingTokens(false);
+              setIsLoadingCreators(false);
+              setIsLoadingChart(false);
+           }
+         }, 2000); // give it a couple seconds to be sure
+      }
     }
-  }, [allEventsWithTimestamps, readOnlyProvider, processDataFromTimestampedEvents]);
+  }, [allEventsWithTimestamps, processDataFromTimestampedEvents, isLoadingTokens, isLoadingCreators, isLoadingChart]);
 
   useEffect(() => {
     const handleAccountsChanged = (accounts: string[]) => {
@@ -256,7 +277,7 @@ const App: React.FC = () => {
         const block = await readOnlyProvider.getBlock(eventFromReceipt.blockNumber);
         const newEventObject = {
           ...eventFromReceipt,
-          timestamp: block.timestamp * 1000,
+          timestamp: block!.timestamp * 1000,
         };
         setAllEventsWithTimestamps((prevEvents) => [newEventObject, ...prevEvents].sort((a, b) => b.blockNumber - a.blockNumber || b.logIndex - a.logIndex));
       } catch (error) {
@@ -274,7 +295,12 @@ const App: React.FC = () => {
     
     const handleNewToken = async (...args: any[]) => {
         const event = args[args.length - 1];
-        onTokenCreated(event);
+        // In Ethers v6, the event object itself needs parsing for real-time listeners.
+        const parsedEvent = {
+            ...event,
+            args: contract.interface.parseLog(event).args,
+        };
+        onTokenCreated(parsedEvent);
     };
 
     contract.on('TokenCreated', handleNewToken);

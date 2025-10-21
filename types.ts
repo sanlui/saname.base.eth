@@ -5,6 +5,7 @@ export interface Token {
   creator: string;
   address: string;
   supply: string;
+  timestamp?: number;
   txHash?: string;
 }
 
@@ -12,7 +13,6 @@ export interface Creator {
   rank: number;
   address: string;
   tokensCreated: number;
-  badge: string;
 }
 
 // EIP-6963 Types

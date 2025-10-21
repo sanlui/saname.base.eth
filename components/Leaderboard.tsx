@@ -15,16 +15,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ creators, isLoading, onRefres
     if (!address) return '';
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
   };
-
-  const getBadgeColor = (badge: string) => {
-    switch(badge) {
-        case 'Super Minter': return 'bg-purple-500/20 text-purple-300';
-        case 'Token Master': return 'bg-yellow-500/20 text-yellow-300';
-        case 'Novice Creator': return 'bg-blue-500/20 text-blue-300';
-        case 'New Creator': return 'bg-gray-500/20 text-gray-300';
-        default: return 'bg-gray-500/20 text-gray-300';
-    }
-  }
   
   const renderContent = () => {
     if (isLoading && creators.length === 0) {
@@ -41,8 +31,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ creators, isLoading, onRefres
                 <thead className="border-b border-slate-700 text-base-text-secondary">
                     <tr>
                         <th className="p-3">Rank</th>
-                        <th className="p-3">Creator</th>
-                        <th className="p-3">Badge</th>
+                        <th className="p-3">Creator Address</th>
                         <th className="p-3 text-right">Tokens Created</th>
                     </tr>
                 </thead>
@@ -55,12 +44,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ creators, isLoading, onRefres
                                     {abbreviateAddress(creator.address)}
                                 </a>
                             </td>
-                            <td className="p-3">
-                                <span className={`px-2 py-1 text-xs font-bold rounded-full ${getBadgeColor(creator.badge)}`}>
-                                    {creator.badge}
-                                </span>
-                            </td>
-                            <td className="p-3 text-right font-medium">
+                            <td className="p-3 text-right font-medium text-lg">
                                 {creator.tokensCreated.toLocaleString()}
                             </td>
                         </tr>
@@ -87,7 +71,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ creators, isLoading, onRefres
   );
 
   return (
-    <Card title="Factory Leaderboard" action={refreshButton}>
+    <Card title="Creators Leaderboard" action={refreshButton}>
       {renderContent()}
     </Card>
   );

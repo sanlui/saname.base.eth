@@ -13,7 +13,10 @@ interface ChartData {
   datasets: {
     label: string;
     data: number[];
-    backgroundColor: string;
+    backgroundColor: any;
+    borderColor: string;
+    fill: boolean;
+    tension: number;
   }[];
 }
 
@@ -35,7 +38,7 @@ const PlatformActivityChart: React.FC<PlatformActivityChartProps> = ({ chartData
         }
 
         chartInstance.current = new window.Chart(ctx, {
-          type: 'bar',
+          type: 'line',
           data: chartData,
           options: {
             responsive: true,
@@ -93,13 +96,13 @@ const PlatformActivityChart: React.FC<PlatformActivityChartProps> = ({ chartData
           return <div className="absolute inset-0 flex items-center justify-center text-base-text-secondary"><p>Loading chart data...</p></div>;
       }
       if (!chartData || chartData.datasets[0].data.every(d => d === 0)) {
-           return <div className="absolute inset-0 flex items-center justify-center text-base-text-secondary"><p>No activity in the last 30 days.</p></div>;
+           return <div className="absolute inset-0 flex items-center justify-center text-base-text-secondary"><p>No activity in the last 7 days.</p></div>;
       }
       return <canvas ref={chartRef}></canvas>;
   }
 
   return (
-    <Card title="Factory Activity (Last 30 Days)">
+    <Card title="Platform Activity">
       <div className="relative h-64">
         {renderContent()}
       </div>
