@@ -37,7 +37,7 @@ const App: React.FC = () => {
   const [chartData, setChartData] = useState<ChartData | null>(null);
   const [isLoadingChart, setIsLoadingChart] = useState(true);
   const [baseFee, setBaseFee] = useState<string | null>(null);
-  const [allEvents, setAllEvents] = useState<any[]>([]);
+  const [allEventsWithTimestamps, setAllEventsWithTimestamps] = useState<any[]>([]);
 
   const [availableWallets, setAvailableWallets] = useState<EIP6963ProviderDetail[]>([]);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
@@ -82,7 +82,7 @@ const App: React.FC = () => {
     }
   };
   
-  const processAllEventData = useCallback(async (events: any[], contract: any, providerInstance: any) => {
+  const processDataFromTimestampedEvents = useCallback(async (events: any[], contract: any) => {
       // --- Process for Latest Tokens ---
       const latestTokens = events.slice(0, 10);
       const formattedTokens: Token[] = latestTokens.map(event => ({
@@ -124,14 +124,8 @@ const App: React.FC = () => {
       setIsLoadingCreators(false);
 
       // --- Process for Chart ---
-      const blocks = await Promise.all(events.map(e => providerInstance.getBlock(e.blockNumber)));
-      const eventsWithTimestamps = events.map((event, index) => ({
-          ...event,
-          timestamp: blocks[index].timestamp * 1000,
-      }));
-
       const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-      const recentEvents = eventsWithTimestamps.filter(e => e.timestamp >= thirtyDaysAgo);
+      const recentEvents = events.filter(e => e.timestamp >= thirtyDaysAgo);
 
       const dailyCounts = new Map<string, number>();
       recentEvents.forEach(event => {
@@ -175,10 +169,17 @@ const App: React.FC = () => {
 
       const filter = contract.filters.TokenCreated();
       const pastEvents = await contract.queryFilter(filter, 'earliest');
-      const sortedEvents = [...pastEvents].sort((a, b) => b.blockNumber - a.blockNumber);
       
-      setAllEvents(sortedEvents);
-      await processAllEventData(sortedEvents, contract, readOnlyProvider);
+      const blocks = await Promise.all(pastEvents.map(e => readOnlyProvider.getBlock(e.blockNumber)));
+      const eventsWithTimestamps = pastEvents.map((event, index) => ({
+        ...event,
+        timestamp: blocks[index].timestamp * 1000,
+      }));
+      
+      const sortedEvents = [...eventsWithTimestamps].sort((a, b) => b.blockNumber - a.blockNumber);
+      
+      setAllEventsWithTimestamps(sortedEvents);
+      await processDataFromTimestampedEvents(sortedEvents, contract);
 
     } catch (error) {
       console.error("Error fetching chain data:", error);
@@ -186,7 +187,7 @@ const App: React.FC = () => {
       setIsLoadingCreators(false);
       setIsLoadingChart(false);
     }
-  }, [readOnlyProvider, processAllEventData]);
+  }, [readOnlyProvider, processDataFromTimestampedEvents]);
   
   useEffect(() => {
     fetchInitialChainData();
@@ -218,10 +219,12 @@ const App: React.FC = () => {
     
     const contract = new window.ethers.Contract(contractAddress, contractABI, readOnlyProvider);
     
-    const handleNewToken = (...args: any[]) => {
+    const handleNewToken = async (...args: any[]) => {
         const event = args[args.length - 1];
+        const block = await readOnlyProvider.getBlock(event.blockNumber);
         const newEventObject = {
             ...event,
+            timestamp: block.timestamp * 1000,
             args: {
                 creator: args[0],
                 tokenAddress: args[1],
@@ -231,9 +234,10 @@ const App: React.FC = () => {
                 feePaid: args[5],
             }
         };
-        setAllEvents(prevEvents => {
+
+        setAllEventsWithTimestamps(prevEvents => {
             const newTotalEvents = [newEventObject, ...prevEvents];
-            processAllEventData(newTotalEvents, contract, readOnlyProvider);
+            processDataFromTimestampedEvents(newTotalEvents, contract);
             return newTotalEvents;
         });
     };
@@ -243,7 +247,7 @@ const App: React.FC = () => {
     return () => {
       contract.removeAllListeners('TokenCreated');
     };
-  }, [readOnlyProvider, processAllEventData]);
+  }, [readOnlyProvider, processDataFromTimestampedEvents]);
 
 
   return (
