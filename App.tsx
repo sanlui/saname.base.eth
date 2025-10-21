@@ -44,14 +44,17 @@ const App: React.FC = () => {
   
 
   useEffect(() => {
+    // Establish a stable, read-only connection to the blockchain immediately.
+    if (window.ethers) {
+        const jsonRpcProvider = new window.ethers.providers.JsonRpcProvider('https://mainnet.base.org');
+        setReadOnlyProvider(jsonRpcProvider);
+    }
+    
+    // Listen for wallet providers to populate the connection modal.
     const onAnnounceProvider = (event: EIP6963AnnounceProviderEvent) => {
       setAvailableWallets(prev => {
         if (prev.some(p => p.info.uuid === event.detail.info.uuid)) return prev;
         return [...prev, event.detail];
-      });
-       setReadOnlyProvider(currentProvider => {
-          if (currentProvider || !window.ethers) return currentProvider;
-          return new window.ethers.providers.Web3Provider(event.detail.provider);
       });
     };
     
