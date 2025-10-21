@@ -46,7 +46,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ creators, isLoading }) => {
                 </thead>
                 <tbody>
                     {creators.map((creator) => (
-                        <tr key={creator.rank} className="border-b border-slate-800 hover:bg-slate-700/50 transition-colors">
+                        <tr key={creator.address} className="border-b border-slate-800 hover:bg-slate-700/50 transition-colors">
                             <td className="p-3 font-bold text-lg">{creator.rank}</td>
                             <td className="p-3 font-mono text-sm">
                                 <a href={`https://basescan.org/address/${creator.address}`} target="_blank" rel="noopener noreferrer" className="text-base-blue hover:underline">

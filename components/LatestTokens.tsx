@@ -44,8 +44,8 @@ const LatestTokens: React.FC<LatestTokensProps> = ({ tokens, isLoading }) => {
             </tr>
           </thead>
           <tbody>
-            {tokens.map((token, index) => (
-              <tr key={`${token.address}-${index}`} className="border-b border-slate-800 hover:bg-slate-700/50 transition-colors">
+            {tokens.map((token) => (
+              <tr key={token.address} className="border-b border-slate-800 hover:bg-slate-700/50 transition-colors">
                 <td className="p-3 font-mono text-sm">
                    <a href={`https://basescan.org/address/${token.creator}`} target="_blank" rel="noopener noreferrer" className="text-base-blue hover:underline">
                     {abbreviateAddress(token.creator)}
