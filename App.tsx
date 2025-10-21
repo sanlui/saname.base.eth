@@ -8,14 +8,7 @@ import PlatformActivityChart from './components/PlatformActivityChart';
 import WalletSelectionModal from './components/WalletSelectionModal';
 import { contractAddress, contractABI } from './constants';
 import type { Token, Creator, EIP6963ProviderDetail, EIP6963AnnounceProviderEvent } from './types';
-import { ethers } from 'ethers';
-
-declare global {
-  interface Window {
-    ethereum?: any;
-    ethers?: any;
-  }
-}
+import { ethers, Contract, FallbackProvider, BrowserProvider, JsonRpcProvider, BigNumberish } from 'ethers';
 
 interface ChartData {
   labels: string[];
@@ -28,8 +21,8 @@ interface ChartData {
 
 const App: React.FC = () => {
   const [accountAddress, setAccountAddress] = useState<string | null>(null);
-  const [provider, setProvider] = useState<ethers.providers.Web3Provider | null>(null);
-  const [readOnlyProvider, setReadOnlyProvider] = useState<ethers.providers.FallbackProvider | null>(null);
+  const [provider, setProvider] = useState<BrowserProvider | null>(null);
+  const [readOnlyProvider, setReadOnlyProvider] = useState<FallbackProvider | null>(null);
   const [tokens, setTokens] = useState<Token[]>([]);
   const [isLoadingTokens, setIsLoadingTokens] = useState(true);
   const [creators, setCreators] = useState<Creator[]>([]);
@@ -44,16 +37,14 @@ const App: React.FC = () => {
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
 
   useEffect(() => {
-    if (window.ethers) {
-        const providers = [
-            new window.ethers.providers.JsonRpcProvider('https://mainnet.base.org'),
-            new window.ethers.providers.JsonRpcProvider('https://base.publicnode.com'),
-            new window.ethers.providers.JsonRpcProvider('https://rpc.ankr.com/base'),
-            new window.ethers.providers.JsonRpcProvider('https://base.drpc.org'),
-        ];
-        const fallbackProvider = new window.ethers.providers.FallbackProvider(providers, 1);
-        setReadOnlyProvider(fallbackProvider);
-    }
+    const providers = [
+        new JsonRpcProvider('https://mainnet.base.org'),
+        new JsonRpcProvider('https://base.publicnode.com'),
+        new JsonRpcProvider('https://rpc.ankr.com/base'),
+        new JsonRpcProvider('https://base.drpc.org'),
+    ];
+    const fallbackProvider = new FallbackProvider(providers, 1);
+    setReadOnlyProvider(fallbackProvider);
     
     const onAnnounceProvider = (event: EIP6963AnnounceProviderEvent) => {
       setAvailableWallets(prev => {
@@ -77,9 +68,8 @@ const App: React.FC = () => {
   const handleSelectWallet = async (wallet: EIP6963ProviderDetail) => {
     setIsWalletModalOpen(false);
     try {
-      const newProvider = new window.ethers.providers.Web3Provider(wallet.provider);
-      await newProvider.send("eth_requestAccounts", []);
-      const signer = newProvider.getSigner();
+      const newProvider = new BrowserProvider(wallet.provider);
+      const signer = await newProvider.getSigner();
       const address = await signer.getAddress();
       setAccountAddress(address);
       setProvider(newProvider);
@@ -89,7 +79,7 @@ const App: React.FC = () => {
     }
   };
   
-  const processDataFromTimestampedEvents = useCallback(async (events: any[], contract: ethers.Contract) => {
+  const processDataFromTimestampedEvents = useCallback(async (events: any[], contract: Contract) => {
       setIsLoadingTokens(true);
       setIsLoadingCreators(true);
       setIsLoadingChart(true);
@@ -107,17 +97,15 @@ const App: React.FC = () => {
       setIsLoadingTokens(false);
       
       // --- Process for Leaderboard ---
-      const supplyByCreator = new Map<string, ethers.BigNumber>();
+      const supplyByCreator = new Map<string, bigint>();
       events.forEach(event => {
         const { creator, supply } = event.args;
-        if (supplyByCreator.has(creator)) {
-          supplyByCreator.set(creator, supplyByCreator.get(creator)!.add(supply));
-        } else {
-          supplyByCreator.set(creator, supply);
-        }
+        const currentSupply = supplyByCreator.get(creator) || BigInt(0);
+        supplyByCreator.set(creator, currentSupply + supply);
       });
+
       const sortedCreators = Array.from(supplyByCreator.entries())
-        .sort(([, a], [, b]) => (b.gt(a) ? 1 : -1))
+        .sort(([, a], [, b]) => (a > b ? -1 : 1))
         .slice(0, 10);
       
       const topCreatorsWithBadges: Creator[] = await Promise.all(
@@ -175,11 +163,11 @@ const App: React.FC = () => {
       setIsLoadingCreators(true);
       setIsLoadingChart(true);
 
-      const contract = new window.ethers.Contract(contractAddress, contractABI, readOnlyProvider);
+      const contract = new Contract(contractAddress, contractABI, readOnlyProvider);
 
       if (!baseFee) {
         const fee = await contract.baseFee();
-        setBaseFee(window.ethers.utils.formatEther(fee));
+        setBaseFee(ethers.formatEther(fee));
       }
       
       const filter = contract.filters.TokenCreated();
@@ -196,7 +184,7 @@ const App: React.FC = () => {
       }
       
       const blockNumbers = [...new Set(pastEvents.map(e => e.blockNumber))];
-      const blockMap = new Map<number, ethers.providers.Block>();
+      const blockMap = new Map<number, any>();
       const blockPromises = blockNumbers.map(num => readOnlyProvider.getBlock(num));
       const resolvedBlocks = await Promise.all(blockPromises);
       resolvedBlocks.forEach(block => blockMap.set(block.number, block));
@@ -228,7 +216,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (allEventsWithTimestamps.length > 0 && readOnlyProvider) {
-        const contract = new window.ethers.Contract(contractAddress, contractABI, readOnlyProvider);
+        const contract = new Contract(contractAddress, contractABI, readOnlyProvider);
         processDataFromTimestampedEvents(allEventsWithTimestamps, contract);
     }
   }, [allEventsWithTimestamps, readOnlyProvider, processDataFromTimestampedEvents]);
@@ -282,7 +270,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!readOnlyProvider) return;
     
-    const contract = new window.ethers.Contract(contractAddress, contractABI, readOnlyProvider);
+    const contract = new Contract(contractAddress, contractABI, readOnlyProvider);
     
     const handleNewToken = async (...args: any[]) => {
         const event = args[args.length - 1];

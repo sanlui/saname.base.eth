@@ -4,11 +4,11 @@ import Card from './Card';
 import SuccessModal from './SuccessModal';
 import { contractAddress, contractABI } from '../constants';
 import type { Token } from '../types';
-import { ethers } from 'ethers';
+import { ethers, BrowserProvider, Contract } from 'ethers';
 
 interface TokenCreationProps {
   accountAddress: string | null;
-  provider: ethers.providers.Web3Provider | null;
+  provider: BrowserProvider | null;
   baseFee: string | null;
   onTokenCreated: (event: any) => void;
 }
@@ -38,30 +38,43 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
     setFeedback(null);
 
     try {
-      const signer = provider.getSigner();
-      const contract = new window.ethers.Contract(contractAddress, contractABI, signer);
+      const signer = await provider.getSigner();
+      const contract = new Contract(contractAddress, contractABI, signer);
 
-      const supply = window.ethers.BigNumber.from(tokenSupply);
-      const feeInWei = window.ethers.utils.parseEther(baseFee || '0');
+      const supply = ethers.toBigInt(tokenSupply);
+      const feeInWei = ethers.parseEther(baseFee || '0');
 
       const tx = await contract.createToken(tokenName, tokenSymbol, supply, { value: feeInWei });
       setFeedback({ type: 'info', message: `Transaction in progress... Waiting for confirmation.` });
       
       const receipt = await tx.wait();
       
-      const event = receipt.events?.find((e: any) => e.event === 'TokenCreated');
+      let parsedEvent = null;
+      if (receipt && receipt.logs) {
+        for (const log of receipt.logs) {
+            try {
+                const event = contract.interface.parseLog(log);
+                if (event && event.name === 'TokenCreated') {
+                    parsedEvent = { ...log, args: event.args, name: event.name };
+                    break;
+                }
+            } catch (e) {
+                // Not a log from this contract's ABI, ignore
+            }
+        }
+      }
       
-      if (event && event.args) {
+      if (parsedEvent && parsedEvent.args) {
           // Guaranteed UI update by passing the confirmed event data up to the parent.
-          onTokenCreated(event);
+          onTokenCreated(parsedEvent);
 
           const createdToken: Token = {
-              name: event.args.name,
-              symbol: event.args.symbol,
-              supply: event.args.supply.toString(),
-              address: event.args.tokenAddress,
-              creator: event.args.creator,
-              txHash: receipt.transactionHash,
+              name: parsedEvent.args.name,
+              symbol: parsedEvent.args.symbol,
+              supply: parsedEvent.args.supply.toString(),
+              address: parsedEvent.args.tokenAddress,
+              creator: parsedEvent.args.creator,
+              txHash: receipt.hash,
           };
           setNewTokenDetails(createdToken);
           setIsSuccessModalOpen(true);
@@ -142,7 +155,7 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
           >
             {isLoading ? (
               <>
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
