@@ -3,8 +3,8 @@ export interface Token {
   name: string;
   symbol: string;
   creator: string;
-  timestamp: string;
   address: string;
+  supply: string;
 }
 
 export interface Creator {
