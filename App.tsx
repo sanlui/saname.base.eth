@@ -178,10 +178,9 @@ const App: React.FC = () => {
       
       const filter = await contract.filters.TokenCreated();
       const latestBlock = await readOnlyProvider.getBlockNumber();
-      // CRITICAL FIX: Start scanning from the block the contract was deployed, not from block 0.
       const startingBlock = 3713640;
-      // CRITICAL FIX: Reduce chunk size to be compatible with free RPC providers.
-      const chunkSize = 2000;
+      // CRITICAL FIX: Reduce chunk size and add a delay to be compatible with free RPC providers.
+      const chunkSize = 500;
       let pastEvents = [];
 
       for (let i = startingBlock; i <= latestBlock; i += chunkSize) {
@@ -189,11 +188,12 @@ const App: React.FC = () => {
           const toBlock = Math.min(i + chunkSize - 1, latestBlock);
           const chunkEvents = await contract.queryFilter(filter, fromBlock, toBlock);
           pastEvents.push(...chunkEvents);
+          // Add a small delay to prevent rate-limiting
+          await new Promise(resolve => setTimeout(resolve, 500));
       }
       
       const blockNumbers = [...new Set(pastEvents.map(e => e.blockNumber))];
       const blockMap = new Map<number, any>();
-      // Optimization: Fetch each block only once
       const blockPromises = blockNumbers.map(num => readOnlyProvider.getBlock(num));
       const resolvedBlocks = await Promise.all(blockPromises);
       resolvedBlocks.forEach(block => {
@@ -229,7 +229,6 @@ const App: React.FC = () => {
     if (allEventsWithTimestamps.length > 0) {
         processDataFromTimestampedEvents(allEventsWithTimestamps);
     } else {
-      // Handle case where queryFilter returns empty but isn't loading
       const loadingStates = [isLoadingTokens, isLoadingCreators, isLoadingChart];
       if (loadingStates.some(Boolean)) {
          setTimeout(() => {
@@ -238,7 +237,7 @@ const App: React.FC = () => {
               setIsLoadingCreators(false);
               setIsLoadingChart(false);
            }
-         }, 2000); // give it a couple seconds to be sure
+         }, 2000);
       }
     }
   }, [allEventsWithTimestamps, processDataFromTimestampedEvents, isLoadingTokens, isLoadingCreators, isLoadingChart]);
@@ -296,7 +295,6 @@ const App: React.FC = () => {
     
     const handleNewToken = async (...args: any[]) => {
         const event = args[args.length - 1];
-        // In Ethers v6, the event object itself needs parsing for real-time listeners.
         const parsedEvent = {
             ...event,
             args: contract.interface.parseLog(event).args,
