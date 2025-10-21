@@ -1,40 +1,24 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Card from './Card';
 import { contractAddress, contractABI } from '../constants';
 
 interface TokenCreationProps {
   accountAddress: string | null;
+  provider: any; // Ethers Web3Provider
+  baseFee: string | null;
 }
 
-const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress }) => {
+const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider, baseFee }) => {
   const [tokenName, setTokenName] = useState('');
   const [tokenSymbol, setTokenSymbol] = useState('');
   const [tokenSupply, setTokenSupply] = useState('');
-  const [baseFee, setBaseFee] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
 
-  useEffect(() => {
-    const fetchBaseFee = async () => {
-      if (window.ethereum) {
-        try {
-          const provider = new window.ethers.providers.Web3Provider(window.ethereum);
-          const contract = new window.ethers.Contract(contractAddress, contractABI, provider);
-          const fee = await contract.baseFee();
-          setBaseFee(window.ethers.utils.formatEther(fee));
-        } catch (error) {
-          console.error("Error fetching base fee:", error);
-          setFeedback({ type: 'error', message: 'Could not fetch creation fee from the contract.' });
-        }
-      }
-    };
-    fetchBaseFee();
-  }, []);
-
   const handleCreateToken = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!accountAddress || !baseFee) {
+    if (!accountAddress || !provider) {
         setFeedback({ type: 'error', message: 'Please connect your wallet first.' });
         return;
     }
@@ -48,12 +32,11 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress }) => {
     setFeedback(null);
 
     try {
-      const provider = new window.ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
       const contract = new window.ethers.Contract(contractAddress, contractABI, signer);
 
       const supply = window.ethers.BigNumber.from(tokenSupply);
-      const feeInWei = window.ethers.utils.parseEther(baseFee);
+      const feeInWei = window.ethers.utils.parseEther(baseFee || '0');
 
       const tx = await contract.createToken(tokenName, tokenSymbol, supply, { value: feeInWei });
       setFeedback({ type: 'info', message: `Transaction in progress... Waiting for confirmation.` });

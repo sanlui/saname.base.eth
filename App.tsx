@@ -1,12 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import TokenCreation from './components/TokenCreation';
 import LatestTokens from './components/LatestTokens';
 import Leaderboard from './components/Leaderboard';
 import PlatformActivityChart from './components/PlatformActivityChart';
+import WalletSelectionModal from './components/WalletSelectionModal';
 import { contractAddress, contractABI } from './constants';
-import type { Token, Creator } from './types';
+import type { Token, Creator, EIP6963ProviderDetail, EIP6963AnnounceProviderEvent } from './types';
 
 declare global {
   interface Window {
@@ -27,31 +28,58 @@ interface ChartData {
 
 const App: React.FC = () => {
   const [accountAddress, setAccountAddress] = useState<string | null>(null);
+  const [provider, setProvider] = useState<any>(null);
+  const [readOnlyProvider, setReadOnlyProvider] = useState<any>(null);
   const [tokens, setTokens] = useState<Token[]>([]);
   const [isLoadingTokens, setIsLoadingTokens] = useState(true);
   const [creators, setCreators] = useState<Creator[]>([]);
   const [isLoadingCreators, setIsLoadingCreators] = useState(true);
   const [chartData, setChartData] = useState<ChartData | null>(null);
   const [isLoadingChart, setIsLoadingChart] = useState(true);
+  const [baseFee, setBaseFee] = useState<string | null>(null);
 
-  const handleConnectWallet = async () => {
-    if (window.ethereum) {
-      try {
-        const provider = new window.ethers.providers.Web3Provider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
-        const signer = provider.getSigner();
-        const address = await signer.getAddress();
-        setAccountAddress(address);
-      } catch (error) {
-        console.error("Error connecting to wallet:", error);
-        alert("Failed to connect wallet. Please check the console for more details.");
+  const [availableWallets, setAvailableWallets] = useState<EIP6963ProviderDetail[]>([]);
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
+
+  useEffect(() => {
+    const onAnnounceProvider = (event: EIP6963AnnounceProviderEvent) => {
+      setAvailableWallets(prev => {
+        if (prev.some(p => p.info.uuid === event.detail.info.uuid)) return prev;
+        return [...prev, event.detail];
+      });
+      if (!readOnlyProvider) {
+        setReadOnlyProvider(new window.ethers.providers.Web3Provider(event.detail.provider));
       }
-    } else {
-      alert("Please install MetaMask or another Ethereum-compatible wallet to use this dApp.");
-    }
+    };
+    
+    window.addEventListener('eip6963:announceProvider', onAnnounceProvider);
+    window.dispatchEvent(new Event('eip6963:requestProvider'));
+
+    return () => {
+      window.removeEventListener('eip6963:announceProvider', onAnnounceProvider);
+    };
+  }, [readOnlyProvider]);
+
+  const handleConnectWallet = () => {
+    setIsWalletModalOpen(true);
   };
 
-  const processEventData = async (events: any[], contract: any, provider: any) => {
+  const handleSelectWallet = async (wallet: EIP6963ProviderDetail) => {
+    setIsWalletModalOpen(false);
+    try {
+      const newProvider = new window.ethers.providers.Web3Provider(wallet.provider);
+      await newProvider.send("eth_requestAccounts", []);
+      const signer = newProvider.getSigner();
+      const address = await signer.getAddress();
+      setAccountAddress(address);
+      setProvider(newProvider);
+    } catch (error) {
+      console.error("Error connecting to wallet:", error);
+      alert("Failed to connect wallet. Please check the console for more details.");
+    }
+  };
+  
+  const processEventData = useCallback(async (events: any[], contract: any, provider: any) => {
       // --- Process for Leaderboard ---
       setIsLoadingCreators(true);
       const supplyByCreator = new Map<string, any>();
@@ -118,7 +146,42 @@ const App: React.FC = () => {
           }]
       });
       setIsLoadingChart(false);
-  }
+  }, []);
+
+  const fetchAllChainData = useCallback(async () => {
+    if (!readOnlyProvider) return;
+    try {
+      setIsLoadingTokens(true);
+      const contract = new window.ethers.Contract(contractAddress, contractABI, readOnlyProvider);
+
+      const fee = await contract.baseFee();
+      setBaseFee(window.ethers.utils.formatEther(fee));
+
+      const filter = contract.filters.TokenCreated();
+      const pastEvents = await contract.queryFilter(filter, 'earliest');
+      const sortedEvents = [...pastEvents].sort((a, b) => b.blockNumber - a.blockNumber);
+
+      const latestTokens = sortedEvents.slice(0, 10);
+      const formattedTokens: Token[] = latestTokens.map(event => ({
+        creator: event.args!.creator,
+        address: event.args!.tokenAddress,
+        name: event.args!.name,
+        symbol: event.args!.symbol,
+        supply: event.args!.supply.toString(),
+      }));
+      setTokens(formattedTokens);
+      setIsLoadingTokens(false);
+      
+      await processEventData(sortedEvents, contract, readOnlyProvider);
+
+    } catch (error) {
+      console.error("Error fetching chain data:", error);
+      setIsLoadingTokens(false);
+      setIsLoadingCreators(false);
+      setIsLoadingChart(false);
+    }
+  }, [readOnlyProvider, processEventData]);
+
 
   useEffect(() => {
     const handleAccountsChanged = (accounts: string[]) => {
@@ -126,104 +189,46 @@ const App: React.FC = () => {
         setAccountAddress(accounts[0]);
       } else {
         setAccountAddress(null);
+        setProvider(null);
       }
     };
 
-    const checkIfWalletIsConnected = async () => {
-      if (window.ethereum) {
-        try {
-          const provider = new window.ethers.providers.Web3Provider(window.ethereum);
-          const accounts = await provider.listAccounts();
-          if (accounts.length > 0) {
-            setAccountAddress(accounts[0]);
-          }
-        } catch (error) {
-            console.error("Could not check for connected wallet:", error);
-        }
-      }
-    };
-
-    checkIfWalletIsConnected();
-
-    if (window.ethereum) {
-      window.ethereum.on('accountsChanged', handleAccountsChanged);
+    if (provider?.provider) {
+        provider.provider.on('accountsChanged', handleAccountsChanged);
     }
 
     return () => {
-      if (window.ethereum) {
-        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+      if (provider?.provider) {
+        provider.provider.removeListener('accountsChanged', handleAccountsChanged);
       }
     };
-  }, []);
-
+  }, [provider]);
+  
   useEffect(() => {
-    let contract: any;
+    if (!readOnlyProvider) return;
 
-    const fetchAndListen = async () => {
-      try {
-        const provider = new window.ethers.providers.Web3Provider(window.ethereum);
-        contract = new window.ethers.Contract(contractAddress, contractABI, provider);
-
-        // Fetch historical events
-        setIsLoadingTokens(true);
-        const filter = contract.filters.TokenCreated();
-        // A wider block range to ensure we have enough data for the chart and leaderboard
-        const pastEvents = await contract.queryFilter(filter, 'earliest');
-        const sortedEvents = [...pastEvents].sort((a, b) => b.blockNumber - a.blockNumber);
-
-        // --- Process for Latest Tokens ---
-        const latestTokens = sortedEvents.slice(0, 10);
-        const formattedTokens: Token[] = latestTokens.map(event => ({
-          creator: event.args!.creator,
-          address: event.args!.tokenAddress,
-          name: event.args!.name,
-          symbol: event.args!.symbol,
-          supply: event.args!.supply.toString(),
-        }));
-        setTokens(formattedTokens);
-        setIsLoadingTokens(false);
-
-        // Process for Leaderboard and Chart
-        processEventData(sortedEvents, contract, provider);
-
-        // Listen for new events
-        const handleNewToken = (creator: string, tokenAddress: string, name: string, symbol: string, supply: any) => {
-          const newToken: Token = {
-            creator,
-            address: tokenAddress,
-            name,
-            symbol,
-            supply: supply.toString(),
-          };
-          setTokens(prevTokens => [newToken, ...prevTokens.slice(0, 9)]);
-          // Re-fetch all data to update leaderboard and chart
-          fetchAndListen();
-        };
-
-        contract.on('TokenCreated', handleNewToken);
-
-      } catch (error) {
-        console.error("Error fetching token events:", error);
-        setIsLoadingTokens(false);
-        setIsLoadingCreators(false);
-        setIsLoadingChart(false);
-      }
+    fetchAllChainData();
+    
+    const contract = new window.ethers.Contract(contractAddress, contractABI, readOnlyProvider);
+    
+    const handleNewToken = (creator: string, tokenAddress: string, name: string, symbol: string, supply: any) => {
+      const newToken: Token = {
+        creator,
+        address: tokenAddress,
+        name,
+        symbol,
+        supply: supply.toString(),
+      };
+      setTokens(prevTokens => [newToken, ...prevTokens.slice(0, 9)]);
+      fetchAllChainData();
     };
 
-    if (window.ethers) {
-      fetchAndListen();
-    } else {
-      setIsLoadingTokens(false);
-      setIsLoadingCreators(false);
-      setIsLoadingChart(false);
-    }
+    contract.on('TokenCreated', handleNewToken);
     
     return () => {
-      if (contract) {
-        contract.removeAllListeners('TokenCreated');
-      }
+      contract.removeAllListeners('TokenCreated');
     };
-  }, []);
+  }, [readOnlyProvider, fetchAllChainData]);
 
 
   return (
@@ -231,7 +236,7 @@ const App: React.FC = () => {
       <Header onConnectWallet={handleConnectWallet} accountAddress={accountAddress} />
       <main className="container mx-auto px-4 py-8">
         <div className="space-y-8">
-          <TokenCreation accountAddress={accountAddress} />
+          <TokenCreation accountAddress={accountAddress} provider={provider} baseFee={baseFee} />
           <LatestTokens tokens={tokens} isLoading={isLoadingTokens} />
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
@@ -246,6 +251,12 @@ const App: React.FC = () => {
       <footer className="text-center py-6 text-base-text-secondary">
         <p>&copy; 2024 Base Token Factory. All Rights Reserved.</p>
       </footer>
+      <WalletSelectionModal
+        isOpen={isWalletModalOpen}
+        onClose={() => setIsWalletModalOpen(false)}
+        wallets={availableWallets}
+        onSelectWallet={handleSelectWallet}
+      />
     </div>
   );
 };
