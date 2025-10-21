@@ -44,20 +44,16 @@ const App: React.FC = () => {
   
 
   useEffect(() => {
-    // Establish a stable, read-only connection to the blockchain immediately.
     if (window.ethers) {
-        // Using a FallbackProvider to increase reliability by trying multiple public RPCs.
         const providers = [
             new window.ethers.providers.JsonRpcProvider('https://mainnet.base.org'),
             new window.ethers.providers.JsonRpcProvider('https://base.publicnode.com'),
             new window.ethers.providers.JsonRpcProvider('https://base-mainnet.public.blastapi.io'),
         ];
-        // The quorum is 1, meaning we only need one provider to respond to consider it a success.
         const fallbackProvider = new window.ethers.providers.FallbackProvider(providers, 1);
         setReadOnlyProvider(fallbackProvider);
     }
     
-    // Listen for wallet providers to populate the connection modal.
     const onAnnounceProvider = (event: EIP6963AnnounceProviderEvent) => {
       setAvailableWallets(prev => {
         if (prev.some(p => p.info.uuid === event.detail.info.uuid)) return prev;
@@ -93,6 +89,10 @@ const App: React.FC = () => {
   };
   
   const processDataFromTimestampedEvents = useCallback(async (events: any[], contract: any) => {
+      setIsLoadingTokens(true);
+      setIsLoadingCreators(true);
+      setIsLoadingChart(true);
+
       // --- Process for Latest Tokens ---
       const latestTokens = events.slice(0, 10);
       const formattedTokens: Token[] = latestTokens.map(event => ({
@@ -189,7 +189,6 @@ const App: React.FC = () => {
       const sortedEvents = [...eventsWithTimestamps].sort((a, b) => b.blockNumber - a.blockNumber);
       
       setAllEventsWithTimestamps(sortedEvents);
-      await processDataFromTimestampedEvents(sortedEvents, contract);
 
     } catch (error) {
       console.error("Error fetching chain data:", error);
@@ -197,11 +196,19 @@ const App: React.FC = () => {
       setIsLoadingCreators(false);
       setIsLoadingChart(false);
     }
-  }, [readOnlyProvider, processDataFromTimestampedEvents]);
+  }, [readOnlyProvider]);
   
   useEffect(() => {
     fetchInitialChainData();
   }, [fetchInitialChainData]);
+
+  // This effect runs whenever the raw event data changes, ensuring the UI is always in sync.
+  useEffect(() => {
+    if (allEventsWithTimestamps.length > 0 && readOnlyProvider) {
+        const contract = new window.ethers.Contract(contractAddress, contractABI, readOnlyProvider);
+        processDataFromTimestampedEvents(allEventsWithTimestamps, contract);
+    }
+  }, [allEventsWithTimestamps, readOnlyProvider, processDataFromTimestampedEvents]);
 
   useEffect(() => {
     const handleAccountsChanged = (accounts: string[]) => {
@@ -245,11 +252,8 @@ const App: React.FC = () => {
             }
         };
 
-        setAllEventsWithTimestamps(prevEvents => {
-            const newTotalEvents = [newEventObject, ...prevEvents];
-            processDataFromTimestampedEvents(newTotalEvents, contract);
-            return newTotalEvents;
-        });
+        // Only update the raw event list. The separate useEffect will handle processing.
+        setAllEventsWithTimestamps(prevEvents => [newEventObject, ...prevEvents]);
     };
 
     contract.on('TokenCreated', handleNewToken);
@@ -257,7 +261,7 @@ const App: React.FC = () => {
     return () => {
       contract.removeAllListeners('TokenCreated');
     };
-  }, [readOnlyProvider, processDataFromTimestampedEvents]);
+  }, [readOnlyProvider]);
 
 
   return (
