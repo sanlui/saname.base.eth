@@ -1,3 +1,4 @@
+
 import React from 'react';
 import type { Token } from '../types';
 import Card from './Card';
@@ -46,22 +47,12 @@ const LatestTokens: React.FC<LatestTokensProps> = ({ tokens, isLoading }) => {
             {tokens.map((token) => (
               <tr key={token.address} className="border-b border-slate-800 hover:bg-slate-700/50 transition-colors">
                 <td className="p-3 font-mono text-sm">
-                  <a
-                    href={`https://basescan.org/address/${token.creator}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-base-blue hover:underline"
-                  >
+                   <a href={`https://basescan.org/address/${token.creator}`} target="_blank" rel="noopener noreferrer" className="text-base-blue hover:underline">
                     {abbreviateAddress(token.creator)}
                   </a>
                 </td>
-                <td className="p-3 font-mono text-sm">
-                  <a
-                    href={`https://basescan.org/address/${token.address}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-base-blue hover:underline"
-                  >
+                 <td className="p-3 font-mono text-sm">
+                   <a href={`https://basescan.org/address/${token.address}`} target="_blank" rel="noopener noreferrer" className="text-base-blue hover:underline">
                     {abbreviateAddress(token.address)}
                   </a>
                 </td>
@@ -74,7 +65,7 @@ const LatestTokens: React.FC<LatestTokensProps> = ({ tokens, isLoading }) => {
         </table>
       </div>
     );
-  };
+  }
 
   return (
     <Card title="Latest Tokens from this Factory">
