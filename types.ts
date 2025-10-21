@@ -10,5 +10,6 @@ export interface Token {
 export interface Creator {
   rank: number;
   address: string;
-  tokensCreated: number;
+  totalSupply: string;
+  badge: string;
 }

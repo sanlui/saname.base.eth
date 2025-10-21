@@ -8,47 +8,51 @@ declare global {
     }
 }
 
-const PlatformActivityChart: React.FC = () => {
+interface ChartData {
+  labels: string[];
+  datasets: {
+    label: string;
+    data: number[];
+    backgroundColor: string;
+  }[];
+}
+
+interface PlatformActivityChartProps {
+    chartData: ChartData | null;
+    isLoading: boolean;
+}
+
+const PlatformActivityChart: React.FC<PlatformActivityChartProps> = ({ chartData, isLoading }) => {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<any>(null);
 
   useEffect(() => {
-    if (chartRef.current) {
+    if (chartRef.current && chartData) {
       const ctx = chartRef.current.getContext('2d');
       if (ctx) {
-        // Destroy previous chart instance if it exists
         if (chartInstance.current) {
           chartInstance.current.destroy();
         }
 
-        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-        gradient.addColorStop(0, 'rgba(0, 82, 255, 0.5)');
-        gradient.addColorStop(1, 'rgba(0, 82, 255, 0)');
-
         chartInstance.current = new window.Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'],
-            datasets: [{
-              label: 'Tokens Created',
-              data: [12, 19, 25, 35, 42, 33, 50],
-              borderColor: '#0052FF',
-              backgroundColor: gradient,
-              borderWidth: 2,
-              pointBackgroundColor: '#FFFFFF',
-              pointBorderColor: '#0052FF',
-              pointHoverBackgroundColor: '#0052FF',
-              pointHoverBorderColor: '#FFFFFF',
-              tension: 0.4,
-              fill: true,
-            }]
-          },
+          type: 'bar',
+          data: chartData,
           options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
                 legend: {
                     display: false,
+                },
+                tooltip: {
+                    enabled: true,
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: '#1E293B',
+                    titleColor: '#E2E8F0',
+                    bodyColor: '#94A3B8',
+                    borderColor: '#0052FF',
+                    borderWidth: 1,
                 }
             },
             scales: {
@@ -59,6 +63,7 @@ const PlatformActivityChart: React.FC = () => {
                 },
                 ticks: {
                     color: '#94A3B8',
+                    precision: 0,
                 }
               },
               x: {
@@ -75,18 +80,28 @@ const PlatformActivityChart: React.FC = () => {
       }
     }
     
-    // Cleanup function to destroy chart on component unmount
     return () => {
       if (chartInstance.current) {
         chartInstance.current.destroy();
+        chartInstance.current = null;
       }
     };
-  }, []);
+  }, [chartData]);
+  
+  const renderContent = () => {
+      if (isLoading) {
+          return <div className="absolute inset-0 flex items-center justify-center text-base-text-secondary"><p>Loading chart data...</p></div>;
+      }
+      if (!chartData || chartData.datasets[0].data.every(d => d === 0)) {
+           return <div className="absolute inset-0 flex items-center justify-center text-base-text-secondary"><p>No activity in the last 30 days.</p></div>;
+      }
+      return <canvas ref={chartRef}></canvas>;
+  }
 
   return (
-    <Card title="Platform Activity">
+    <Card title="Platform Activity (Last 30 Days)">
       <div className="relative h-64">
-        <canvas ref={chartRef}></canvas>
+        {renderContent()}
       </div>
     </Card>
   );
