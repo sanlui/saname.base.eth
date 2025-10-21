@@ -180,7 +180,8 @@ const App: React.FC = () => {
       const latestBlock = await readOnlyProvider.getBlockNumber();
       // CRITICAL FIX: Start scanning from the block the contract was deployed, not from block 0.
       const startingBlock = 3713640;
-      const chunkSize = 20000;
+      // CRITICAL FIX: Reduce chunk size to be compatible with free RPC providers.
+      const chunkSize = 5000;
       let pastEvents = [];
 
       for (let i = startingBlock; i <= latestBlock; i += chunkSize) {
