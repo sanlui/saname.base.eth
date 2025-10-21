@@ -9,9 +9,10 @@ interface TokenCreationProps {
   accountAddress: string | null;
   provider: any; // Ethers Web3Provider
   baseFee: string | null;
+  onTokenCreated: (event: any) => void;
 }
 
-const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider, baseFee }) => {
+const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider, baseFee, onTokenCreated }) => {
   const [tokenName, setTokenName] = useState('');
   const [tokenSymbol, setTokenSymbol] = useState('');
   const [tokenSupply, setTokenSupply] = useState('');
@@ -50,6 +51,9 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
       const event = receipt.events?.find((e: any) => e.event === 'TokenCreated');
       
       if (event && event.args) {
+          // Guaranteed UI update by passing the confirmed event data up to the parent.
+          onTokenCreated(event);
+
           const createdToken: Token = {
               name: event.args.name,
               symbol: event.args.symbol,
@@ -61,7 +65,7 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
           setNewTokenDetails(createdToken);
           setIsSuccessModalOpen(true);
       } else {
-        setFeedback({ type: 'success', message: 'Token creation successful! Your new token will appear in the "Latest Tokens" list shortly.' });
+        setFeedback({ type: 'error', message: 'Token creation transaction succeeded, but the event was not found. Please check Basescan.' });
       }
       
       setTokenName('');

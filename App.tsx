@@ -231,6 +231,31 @@ const App: React.FC = () => {
     };
   }, [provider]);
   
+  const onTokenCreated = useCallback((eventFromReceipt: any) => {
+    const addEvent = async () => {
+      if (!readOnlyProvider) return;
+
+      const exists = allEventsWithTimestamps.some(
+        (e) => e.transactionHash === eventFromReceipt.transactionHash && e.logIndex === eventFromReceipt.logIndex
+      );
+
+      if (exists) return;
+
+      try {
+        const block = await readOnlyProvider.getBlock(eventFromReceipt.blockNumber);
+        const newEventObject = {
+          ...eventFromReceipt,
+          timestamp: block.timestamp * 1000,
+        };
+        setAllEventsWithTimestamps((prevEvents) => [newEventObject, ...prevEvents].sort((a, b) => b.blockNumber - a.blockNumber || b.logIndex - a.logIndex));
+      } catch (error) {
+        console.error("Error fetching block for new event:", error);
+      }
+    };
+
+    addEvent();
+  }, [allEventsWithTimestamps, readOnlyProvider]);
+
   useEffect(() => {
     if (!readOnlyProvider) return;
     
@@ -238,22 +263,7 @@ const App: React.FC = () => {
     
     const handleNewToken = async (...args: any[]) => {
         const event = args[args.length - 1];
-        const block = await readOnlyProvider.getBlock(event.blockNumber);
-        const newEventObject = {
-            ...event,
-            timestamp: block.timestamp * 1000,
-            args: {
-                creator: args[0],
-                tokenAddress: args[1],
-                name: args[2],
-                symbol: args[3],
-                supply: args[4],
-                feePaid: args[5],
-            }
-        };
-
-        // Only update the raw event list. The separate useEffect will handle processing.
-        setAllEventsWithTimestamps(prevEvents => [newEventObject, ...prevEvents]);
+        onTokenCreated(event);
     };
 
     contract.on('TokenCreated', handleNewToken);
@@ -261,7 +271,7 @@ const App: React.FC = () => {
     return () => {
       contract.removeAllListeners('TokenCreated');
     };
-  }, [readOnlyProvider]);
+  }, [readOnlyProvider, onTokenCreated]);
 
 
   return (
@@ -269,7 +279,12 @@ const App: React.FC = () => {
       <Header onConnectWallet={handleConnectWallet} accountAddress={accountAddress} />
       <main className="container mx-auto px-4 py-8">
         <div className="space-y-8">
-          <TokenCreation accountAddress={accountAddress} provider={provider} baseFee={baseFee} />
+          <TokenCreation 
+            accountAddress={accountAddress} 
+            provider={provider} 
+            baseFee={baseFee}
+            onTokenCreated={onTokenCreated}
+          />
           <LatestTokens tokens={tokens} isLoading={isLoadingTokens} />
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
