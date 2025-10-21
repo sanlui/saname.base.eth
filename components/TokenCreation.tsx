@@ -86,9 +86,11 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
           <label htmlFor="tokenSupply" className="block text-sm font-medium text-base-text-secondary mb-2">Total Supply</label>
           <input type="number" id="tokenSupply" value={tokenSupply} onChange={(e) => setTokenSupply(e.target.value)} placeholder="e.g., 1000000" min="1" className={inputStyles} />
         </div>
-        <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg flex justify-between items-center text-sm">
-            <span className="text-base-text-secondary">Creation Fee</span>
-            <span className="font-bold text-base-text text-base">{baseFee ? `${baseFee} ETH` : 'Loading fee...'}</span>
+        <div>
+           <label className="block text-sm font-medium text-base-text-secondary mb-2">Creation Fee</label>
+            <div className="w-full bg-base-dark border border-slate-600 rounded-md p-3 flex justify-between items-center">
+                <span className="text-base-text-secondary">{baseFee ? `${baseFee} ETH` : 'Loading fee...'}</span>
+            </div>
         </div>
         
         {feedback && (

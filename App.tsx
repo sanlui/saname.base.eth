@@ -37,11 +37,11 @@ const App: React.FC = () => {
   const [chartData, setChartData] = useState<ChartData | null>(null);
   const [isLoadingChart, setIsLoadingChart] = useState(true);
   const [baseFee, setBaseFee] = useState<string | null>(null);
+  const [allEvents, setAllEvents] = useState<any[]>([]);
 
   const [availableWallets, setAvailableWallets] = useState<EIP6963ProviderDetail[]>([]);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   
-  const [allEvents, setAllEvents] = useState<any[]>([]);
 
   useEffect(() => {
     const onAnnounceProvider = (event: EIP6963AnnounceProviderEvent) => {
@@ -49,9 +49,10 @@ const App: React.FC = () => {
         if (prev.some(p => p.info.uuid === event.detail.info.uuid)) return prev;
         return [...prev, event.detail];
       });
-      if (!readOnlyProvider) {
-        setReadOnlyProvider(new window.ethers.providers.Web3Provider(event.detail.provider));
-      }
+       setReadOnlyProvider(currentProvider => {
+          if (currentProvider || !window.ethers) return currentProvider;
+          return new window.ethers.providers.Web3Provider(event.detail.provider);
+      });
     };
     
     window.addEventListener('eip6963:announceProvider', onAnnounceProvider);
@@ -60,7 +61,7 @@ const App: React.FC = () => {
     return () => {
       window.removeEventListener('eip6963:announceProvider', onAnnounceProvider);
     };
-  }, [readOnlyProvider]);
+  }, []);
 
   const handleConnectWallet = () => {
     setIsWalletModalOpen(true);
@@ -81,7 +82,19 @@ const App: React.FC = () => {
     }
   };
   
-  const processEventData = useCallback(async (events: any[], contract: any, provider: any) => {
+  const processAllEventData = useCallback(async (events: any[], contract: any, providerInstance: any) => {
+      // --- Process for Latest Tokens ---
+      const latestTokens = events.slice(0, 10);
+      const formattedTokens: Token[] = latestTokens.map(event => ({
+        creator: event.args!.creator,
+        address: event.args!.tokenAddress,
+        name: event.args!.name,
+        symbol: event.args!.symbol,
+        supply: event.args!.supply.toString(),
+      }));
+      setTokens(formattedTokens);
+      setIsLoadingTokens(false);
+      
       // --- Process for Leaderboard ---
       const supplyByCreator = new Map<string, any>();
       events.forEach(event => {
@@ -111,7 +124,7 @@ const App: React.FC = () => {
       setIsLoadingCreators(false);
 
       // --- Process for Chart ---
-      const blocks = await Promise.all(events.map(e => provider.getBlock(e.blockNumber)));
+      const blocks = await Promise.all(events.map(e => providerInstance.getBlock(e.blockNumber)));
       const eventsWithTimestamps = events.map((event, index) => ({
           ...event,
           timestamp: blocks[index].timestamp * 1000,
@@ -165,6 +178,7 @@ const App: React.FC = () => {
       const sortedEvents = [...pastEvents].sort((a, b) => b.blockNumber - a.blockNumber);
       
       setAllEvents(sortedEvents);
+      await processAllEventData(sortedEvents, contract, readOnlyProvider);
 
     } catch (error) {
       console.error("Error fetching chain data:", error);
@@ -172,37 +186,11 @@ const App: React.FC = () => {
       setIsLoadingCreators(false);
       setIsLoadingChart(false);
     }
-  }, [readOnlyProvider]);
+  }, [readOnlyProvider, processAllEventData]);
   
   useEffect(() => {
     fetchInitialChainData();
   }, [fetchInitialChainData]);
-
-  useEffect(() => {
-    if (!allEvents.length || !readOnlyProvider) return;
-
-    const processAllData = async () => {
-        const contract = new window.ethers.Contract(contractAddress, contractABI, readOnlyProvider);
-
-        // Process for Latest Tokens
-        const latestTokens = allEvents.slice(0, 10);
-        const formattedTokens: Token[] = latestTokens.map(event => ({
-          creator: event.args!.creator,
-          address: event.args!.tokenAddress,
-          name: event.args!.name,
-          symbol: event.args!.symbol,
-          supply: event.args!.supply.toString(),
-        }));
-        setTokens(formattedTokens);
-        setIsLoadingTokens(false);
-
-        // Process for Leaderboard and Chart
-        await processEventData(allEvents, contract, readOnlyProvider);
-    };
-
-    processAllData();
-  }, [allEvents, readOnlyProvider, processEventData]);
-
 
   useEffect(() => {
     const handleAccountsChanged = (accounts: string[]) => {
@@ -243,7 +231,11 @@ const App: React.FC = () => {
                 feePaid: args[5],
             }
         };
-        setAllEvents(prevEvents => [newEventObject, ...prevEvents]);
+        setAllEvents(prevEvents => {
+            const newTotalEvents = [newEventObject, ...prevEvents];
+            processAllEventData(newTotalEvents, contract, readOnlyProvider);
+            return newTotalEvents;
+        });
     };
 
     contract.on('TokenCreated', handleNewToken);
@@ -251,7 +243,7 @@ const App: React.FC = () => {
     return () => {
       contract.removeAllListeners('TokenCreated');
     };
-  }, [readOnlyProvider]);
+  }, [readOnlyProvider, processAllEventData]);
 
 
   return (
