@@ -1,20 +1,19 @@
-
 import React from 'react';
 import { contractAddress } from '../constants';
 
 const Footer: React.FC = () => {
   return (
     <footer className="bg-surface border-t border-border">
-      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <div className="text-sm text-text-secondary font-mono">
+      <div className="container mx-auto px-4 py-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div className="text-sm text-text-secondary font-mono text-center sm:text-left">
             <a 
                 href={`https://basescan.org/address/${contractAddress}`} 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="hover:text-primary transition-colors"
+                className="hover:text-primary transition-colors break-all"
                 aria-label="View contract on Basescan"
             >
-                Contract address: {contractAddress} ✓
+                Contract: {contractAddress}
             </a>
         </div>
         <div className="flex items-center gap-6">

@@ -29,7 +29,7 @@ const Header: React.FC<HeaderProps> = ({ onConnectWallet, accountAddress, onDisc
     <header className="bg-surface/80 border-b border-border backdrop-blur-lg sticky top-0 z-40">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <h1
-          className="text-2xl font-bold text-text-primary font-display cursor-pointer"
+          className="text-xl sm:text-2xl font-bold text-text-primary font-display cursor-pointer"
           onClick={handleLogoClick}
           onKeyDown={handleLogoKeyDown}
           role="button"
@@ -59,7 +59,7 @@ const Header: React.FC<HeaderProps> = ({ onConnectWallet, accountAddress, onDisc
         ) : (
           <button
             onClick={onConnectWallet}
-            className="bg-primary hover:bg-primary-hover text-white font-bold py-2 px-6 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105"
+            className="bg-primary hover:bg-primary-hover text-white font-bold py-2 px-4 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 text-sm sm:text-base"
           >
             Connect Wallet
           </button>

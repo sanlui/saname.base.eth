@@ -200,7 +200,7 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
                             <label htmlFor="tokenName" className={labelStyles}>Token Name</label>
                             <input type="text" id="tokenName" value={tokenName} onChange={(e) => setTokenName(e.target.value)} placeholder="e.g. Galactic Credits" className={inputStyles} required />
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label htmlFor="tokenSymbol" className={labelStyles}>Ticker</label>
                                 <input type="text" id="tokenSymbol" value={tokenSymbol} onChange={(e) => setTokenSymbol(e.target.value)} placeholder="e.g. GLX" className={inputStyles} required />
@@ -210,7 +210,7 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
                                 <input type="number" id="tokenSupply" value={tokenSupply} onChange={(e) => setTokenSupply(e.target.value)} placeholder="1000000" min="1" className={inputStyles} required />
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label htmlFor="tokenStandard" className={labelStyles}>Token Standard</label>
                                  <div className="relative">
