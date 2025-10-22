@@ -1,9 +1,12 @@
 
+
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import TokenCreation from './components/TokenCreation';
 import LatestTokens from './components/LatestTokens';
 import Features from './components/Features';
+import Footer from './components/Footer';
 import WalletSelectionModal from './components/WalletSelectionModal';
 import { contractAddress, contractABI, erc20ABI } from './constants';
 import type { Token, EIP6963ProviderDetail, EIP6963AnnounceProviderEvent } from './types';
@@ -195,27 +198,28 @@ const App: React.FC = () => {
   }, [readOnlyProvider, onTokenCreated]);
 
   return (
-    <div className="min-h-screen bg-background font-sans">
+    <div className="min-h-screen bg-background font-sans flex flex-col">
       <Header onConnectWallet={handleConnectWallet} accountAddress={accountAddress} onDisconnect={handleDisconnect} />
-      <main className="container mx-auto px-4 py-12 md:py-16">
+      <main className="container mx-auto px-4 py-12 md:py-16 flex-grow">
         {/* Hero Section */}
         <section className="text-center">
           <h1 className="text-4xl md:text-5xl font-bold font-display mb-2 animate-fade-in">
             <span className="bg-gradient-to-r from-gradient-start to-gradient-end bg-clip-text text-transparent">
-              Launch Your ERC20 Token on Base.
+              Create Your ERC20 Token on Base, Instantly
             </span>
-            <br />
-            <span className="text-3xl md:text-4xl">No Code. Full Control.</span>
           </h1>
+          <p className="text-2xl md:text-3xl font-bold font-display mb-4 text-text-primary animate-fade-in" style={{ animationDelay: '0.1s' }}>
+            Fast. Simple. All Yours.
+          </p>
           <p className="text-lg md:text-xl text-text-secondary max-w-3xl mx-auto mb-10 animate-fade-in" style={{animationDelay: '0.2s'}}>
-            Skip the complexity. Create, deploy, and own your ERC20 token on the high-speed, low-cost Base network. Your vision, launched in minutes.
+            Create and deploy your custom ERC20 token in minutes. With our no-code creator, you have full ownership and control on the low-cost, high-speed Base network.
           </p>
           <div className="animate-fade-in" style={{animationDelay: '0.3s'}}>
             <button
                 onClick={handleScrollToCreate}
                 className="bg-primary hover:bg-primary-hover text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 shadow-glow"
             >
-              Create Your Token Now
+              Start Creating
             </button>
           </div>
         </section>
@@ -246,15 +250,7 @@ const App: React.FC = () => {
         </section>
 
       </main>
-      <footer className="text-center py-6 mt-8">
-        <p className="text-text-secondary text-sm">
-          Contract address: 
-          <a href={`https://basescan.org/address/${contractAddress}`} target="_blank" rel="noopener noreferrer" className="font-mono text-primary hover:underline ml-2">
-            {contractAddress}
-          </a>
-          <span className="text-green-500 ml-1 inline-block" title="Verified">✓</span>
-        </p>
-      </footer>
+      <Footer />
       <WalletSelectionModal
         isOpen={isWalletModalOpen}
         onClose={handleCloseWalletModal}
