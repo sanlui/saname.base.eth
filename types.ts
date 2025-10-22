@@ -9,13 +9,6 @@ export interface Token {
   decimals?: number;
 }
 
-// Fix: Added missing Creator interface.
-export interface Creator {
-  address: string;
-  tokensCreated: number;
-  rank: number;
-}
-
 // EIP-6963 Types
 export interface EIP6963ProviderInfo {
   uuid: string;
