@@ -2,8 +2,8 @@ import React from 'react';
 import { contractAddress } from '../constants';
 
 const Footer: React.FC = () => {
-  const shareUrl = "https://bas-creator.web.app/";
-  const shareText = "Create your ERC20 token on Base!";
+  const shareUrl = "https://www.disrole.com/";
+  const shareText = "Create your ERC20 token on Base with Disrole!";
   
   return (
     <footer className="bg-surface border-t border-border">
@@ -20,7 +20,7 @@ const Footer: React.FC = () => {
             </a>
         </div>
         <div className="text-sm text-text-secondary text-center order-last sm:order-none">
-            © 2024 Base Token Creator
+            © 2024 Disrole
         </div>
         <div className="flex items-center justify-center gap-6">
           <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary-hover transition-colors" aria-label="Share on Twitter">
