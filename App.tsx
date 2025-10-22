@@ -41,6 +41,11 @@ const App: React.FC = () => {
     };
   }, []);
 
+  const handleDisconnect = () => {
+    setAccountAddress(null);
+    setProvider(null);
+  };
+
   const handleConnectWallet = () => {
     setIsWalletModalOpen(true);
   };
@@ -184,7 +189,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background font-sans">
-      <Header onConnectWallet={handleConnectWallet} accountAddress={accountAddress} />
+      <Header onConnectWallet={handleConnectWallet} accountAddress={accountAddress} onDisconnect={handleDisconnect} />
       <main className="container mx-auto px-4 py-12 md:py-16">
         <h1 className="text-4xl md:text-5xl font-bold text-center font-display mb-10 animate-fade-in">
           <span className="bg-gradient-to-r from-gradient-start to-gradient-end bg-clip-text text-transparent">

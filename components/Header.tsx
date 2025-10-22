@@ -3,9 +3,10 @@ import React from 'react';
 interface HeaderProps {
   onConnectWallet: () => void;
   accountAddress: string | null;
+  onDisconnect: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onConnectWallet, accountAddress }) => {
+const Header: React.FC<HeaderProps> = ({ onConnectWallet, accountAddress, onDisconnect }) => {
   const abbreviateAddress = (address: string) => {
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
   };
@@ -38,17 +39,20 @@ const Header: React.FC<HeaderProps> = ({ onConnectWallet, accountAddress }) => {
           <span className="bg-gradient-to-r from-gradient-start to-gradient-end bg-clip-text text-transparent">Base</span> Token Creator
         </h1>
         {accountAddress ? (
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <div className="bg-background border border-border text-text-secondary font-mono text-sm py-2 px-4 rounded-lg flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-green-500"></span>
               {abbreviateAddress(accountAddress)}
             </div>
-            <button 
-              onClick={onConnectWallet}
-              className="text-sm font-medium text-primary hover:text-primary-hover transition-colors"
-              title="Switch wallet"
+            <button
+              onClick={onDisconnect}
+              className="text-text-secondary hover:text-error transition-colors p-1.5 rounded-full hover:bg-error/10"
+              title="Disconnect wallet"
+              aria-label="Disconnect wallet"
             >
-              Switch
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
             </button>
           </div>
         ) : (
