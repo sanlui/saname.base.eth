@@ -35,7 +35,7 @@ const Header: React.FC<HeaderProps> = ({ onConnectWallet, accountAddress }) => {
           tabIndex={0}
           aria-label="Go to top of page"
         >
-          <span className="text-primary">Base</span> Token Factory
+          <span className="bg-gradient-to-r from-gradient-start to-gradient-end bg-clip-text text-transparent">Base</span> Token Creator
         </h1>
         {accountAddress ? (
           <div className="bg-background border border-border text-text-secondary font-mono text-sm py-2 px-4 rounded-lg flex items-center gap-2">
