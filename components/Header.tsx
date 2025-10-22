@@ -38,9 +38,18 @@ const Header: React.FC<HeaderProps> = ({ onConnectWallet, accountAddress }) => {
           <span className="bg-gradient-to-r from-gradient-start to-gradient-end bg-clip-text text-transparent">Base</span> Token Creator
         </h1>
         {accountAddress ? (
-          <div className="bg-background border border-border text-text-secondary font-mono text-sm py-2 px-4 rounded-lg flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-green-500"></span>
-            {abbreviateAddress(accountAddress)}
+          <div className="flex items-center gap-4">
+            <div className="bg-background border border-border text-text-secondary font-mono text-sm py-2 px-4 rounded-lg flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-500"></span>
+              {abbreviateAddress(accountAddress)}
+            </div>
+            <button 
+              onClick={onConnectWallet}
+              className="text-sm font-medium text-primary hover:text-primary-hover transition-colors"
+              title="Switch wallet"
+            >
+              Switch
+            </button>
           </div>
         ) : (
           <button
