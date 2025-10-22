@@ -145,132 +145,142 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
 
   return (
     <>
-      <div className="bg-surface border border-border rounded-xl shadow-lg p-6 md:p-8 animate-fade-in">
-        <form onSubmit={handleCreateToken} className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                <div 
-                    className="relative lg:col-span-2 flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-lg text-center h-full min-h-[200px] cursor-pointer hover:border-primary transition-colors"
-                    onClick={handleImageUploadClick}
-                    onKeyDown={(e) => e.key === 'Enter' && handleImageUploadClick()}
-                    role="button"
-                    tabIndex={0}
-                    aria-label="Upload coin image"
-                >
-                    <input 
-                        type="file" 
-                        ref={fileInputRef}
-                        onChange={handleImageChange}
-                        accept="image/png, image/jpeg, image/gif"
-                        className="hidden"
-                    />
-                    {imagePreview ? (
-                        <>
-                            <img src={imagePreview} alt="Coin preview" className="w-full h-full max-h-[180px] object-contain rounded-lg" />
-                            <button 
-                                type="button" 
-                                onClick={handleRemoveImage}
-                                className="absolute top-2 right-2 bg-black bg-opacity-60 text-white rounded-full p-1 hover:bg-opacity-80 transition-colors"
-                                aria-label="Remove image"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+      <div className="bg-surface border border-border rounded-xl shadow-lg animate-fade-in" style={{animationDelay: '0.4s'}}>
+        <div className="p-6 md:p-8">
+            <div className="border-b border-border pb-4 mb-6">
+                <h2 className="text-2xl font-bold text-text-primary font-display">Create Your Custom ERC20 Token</h2>
+                <p className="text-text-secondary mt-1">Fill in the details to deploy your token.</p>
+            </div>
+            <form onSubmit={handleCreateToken} className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                    <div 
+                        className="relative lg:col-span-2 flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-lg text-center h-full min-h-[200px] cursor-pointer hover:border-primary transition-colors"
+                        onClick={handleImageUploadClick}
+                        onKeyDown={(e) => e.key === 'Enter' && handleImageUploadClick()}
+                        role="button"
+                        tabIndex={0}
+                        aria-label="Upload coin image"
+                    >
+                        <input 
+                            type="file" 
+                            ref={fileInputRef}
+                            onChange={handleImageChange}
+                            accept="image/png, image/jpeg, image/gif"
+                            className="hidden"
+                        />
+                        {imagePreview ? (
+                            <>
+                                <img src={imagePreview} alt="Preview of the uploaded token icon." className="w-full h-full max-h-[180px] object-contain rounded-lg" />
+                                <button 
+                                    type="button" 
+                                    onClick={handleRemoveImage}
+                                    className="absolute top-2 right-2 bg-black bg-opacity-60 text-white rounded-full p-1 hover:bg-opacity-80 transition-colors"
+                                    aria-label="Remove image"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <title>Remove icon</title>
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <svg className="w-10 h-10 text-text-secondary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                    <title>Upload icon</title>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
                                 </svg>
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            <svg className="w-10 h-10 text-text-secondary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
-                            </svg>
-                            <h3 className="font-semibold mt-2 text-text-primary">Upload Coin Image</h3>
-                            <p className="text-sm text-text-secondary mt-1">PNG, JPG, GIF up to 2MB</p>
-                        </>
-                    )}
-                </div>
-                <div className="lg:col-span-3 space-y-4">
-                     <div>
-                        <label htmlFor="tokenName" className={labelStyles}>Coin Name</label>
-                        <input type="text" id="tokenName" value={tokenName} onChange={(e) => setTokenName(e.target.value)} placeholder="e.g. Galactic Credits" className={inputStyles} required />
+                                <p className="font-semibold mt-2 text-text-primary">Upload Token Icon</p>
+                                <p className="text-sm text-text-secondary mt-1">PNG, JPG, or GIF. Max 2MB.</p>
+                            </>
+                        )}
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label htmlFor="tokenSymbol" className={labelStyles}>Ticker</label>
-                            <input type="text" id="tokenSymbol" value={tokenSymbol} onChange={(e) => setTokenSymbol(e.target.value)} placeholder="e.g. GLX" className={inputStyles} required />
+                    <div className="lg:col-span-3 space-y-4">
+                         <div>
+                            <label htmlFor="tokenName" className={labelStyles}>Token Name</label>
+                            <input type="text" id="tokenName" value={tokenName} onChange={(e) => setTokenName(e.target.value)} placeholder="e.g. Galactic Credits" className={inputStyles} required />
                         </div>
-                        <div>
-                            <label htmlFor="tokenSupply" className={labelStyles}>Total Supply</label>
-                            <input type="number" id="tokenSupply" value={tokenSupply} onChange={(e) => setTokenSupply(e.target.value)} placeholder="1000000" min="1" className={inputStyles} required />
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label htmlFor="tokenStandard" className={labelStyles}>Token Standard</label>
-                             <div className="relative">
-                                <select id="tokenStandard" className={inputStyles + ' appearance-none pr-8'}>
-                                    <option>ERC20</option>
-                                </select>
-                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-text-secondary">
-                                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                                </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label htmlFor="tokenSymbol" className={labelStyles}>Ticker</label>
+                                <input type="text" id="tokenSymbol" value={tokenSymbol} onChange={(e) => setTokenSymbol(e.target.value)} placeholder="e.g. GLX" className={inputStyles} required />
+                            </div>
+                            <div>
+                                <label htmlFor="tokenSupply" className={labelStyles}>Total Supply</label>
+                                <input type="number" id="tokenSupply" value={tokenSupply} onChange={(e) => setTokenSupply(e.target.value)} placeholder="1000000" min="1" className={inputStyles} required />
                             </div>
                         </div>
-                        <div>
-                            <label htmlFor="blockchainNetwork" className={labelStyles}>Blockchain Network</label>
-                            <div className={inputStyles}>Base Mainnet</div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label htmlFor="tokenStandard" className={labelStyles}>Token Standard</label>
+                                 <div className="relative">
+                                    <select id="tokenStandard" className={inputStyles + ' appearance-none pr-8'}>
+                                        <option>ERC20</option>
+                                    </select>
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-text-secondary">
+                                        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label htmlFor="blockchainNetwork" className={labelStyles}>Blockchain Network</label>
+                                <div className={inputStyles}>Base Mainnet</div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <div>
-                <label htmlFor="description" className={labelStyles}>Description (Optional)</label>
-                <textarea id="description" rows={3} placeholder="A new digital currency for the cosmos." className={inputStyles}></textarea>
-            </div>
-            <div>
-                <label htmlFor="iconUrl" className={labelStyles}>Icon URL (Optional)</label>
-                <input type="url" id="iconUrl" placeholder="https://example.com/token-image.png" className={inputStyles} />
-            </div>
-
-            <div className="border-t border-border pt-6">
-                <div className="text-center">
-                    <p className="text-sm text-text-secondary mb-4">
-                        A one-time fee of <span className="font-mono text-green-400">{baseFee ? `${baseFee} ETH` : 'Loading...'}</span> will be sent to the factory contract.
-                    </p>
-                    
-                    {!accountAddress && (
-                         <p className="text-yellow-400 font-semibold mb-4">Please connect your wallet to create a token.</p>
-                    )}
-                    
-                    {feedback && (
-                        <div className={`text-center p-3 rounded-lg text-sm break-words mb-4 ${
-                        feedback.type === 'success' ? 'bg-success/20 text-green-300' : 
-                        feedback.type === 'error' ? 'bg-error/20 text-red-300' :
-                        'bg-info/20 text-blue-300'
-                        }`}>
-                        {feedback.message}
-                        </div>
-                    )}
+                
+                <div>
+                    <label htmlFor="description" className={labelStyles}>Description (Optional)</label>
+                    <textarea id="description" rows={3} placeholder="e.g. The official currency for the Galactic Empire." className={inputStyles}></textarea>
+                </div>
+                <div>
+                    <label htmlFor="iconUrl" className={labelStyles}>Icon URL (Optional)</label>
+                    <input type="url" id="iconUrl" placeholder="https://example.com/token-image.png" className={inputStyles} />
                 </div>
 
-                <button 
-                    type="submit" 
-                    disabled={isLoading || !baseFee || !accountAddress} 
-                    className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 disabled:bg-border disabled:text-text-secondary disabled:cursor-not-allowed disabled:scale-100 flex items-center justify-center shadow-md shadow-primary/20"
-                >
-                    {isLoading ? (
-                    <>
-                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Creating Token...
-                    </>
-                    ) : (
-                    'Create Token'
-                    )}
-                </button>
-            </div>
-        </form>
+                <div className="border-t border-border pt-6">
+                    <div className="text-center mb-4">
+                        <p className="text-sm text-text-primary">
+                          Deployment Fee: <span className="font-mono text-green-400 font-bold">{baseFee ? `${baseFee} ETH` : 'Loading...'}</span>
+                        </p>
+                        <p className="text-xs text-text-secondary mt-1">One-time fee to launch on Base. No hidden costs.</p>
+                        
+                        {!accountAddress && (
+                             <p className="text-yellow-400 font-semibold mt-4">Please connect your wallet to create a token.</p>
+                        )}
+                        
+                        {feedback && (
+                            <div className={`text-center p-3 rounded-lg text-sm break-words mt-4 ${
+                            feedback.type === 'success' ? 'bg-success/20 text-green-300' : 
+                            feedback.type === 'error' ? 'bg-error/20 text-red-300' :
+                            'bg-info/20 text-blue-300'
+                            }`}>
+                            {feedback.message}
+                            </div>
+                        )}
+                    </div>
+
+                    <button 
+                        type="submit" 
+                        disabled={isLoading || !baseFee || !accountAddress} 
+                        className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 disabled:bg-border disabled:text-text-secondary disabled:cursor-not-allowed disabled:scale-100 flex items-center justify-center shadow-md shadow-primary/20"
+                    >
+                        {isLoading ? (
+                        <>
+                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <title>Loading spinner</title>
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Deploying your token...
+                        </>
+                        ) : (
+                        'Launch Token Now'
+                        )}
+                    </button>
+                </div>
+            </form>
+        </div>
       </div>
       <SuccessModal 
         isOpen={isSuccessModalOpen}

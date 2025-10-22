@@ -1,8 +1,9 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import TokenCreation from './components/TokenCreation';
 import LatestTokens from './components/LatestTokens';
+import Features from './components/Features';
 import WalletSelectionModal from './components/WalletSelectionModal';
 import { contractAddress, contractABI, erc20ABI } from './constants';
 import type { Token, EIP6963ProviderDetail, EIP6963AnnounceProviderEvent } from './types';
@@ -21,6 +22,8 @@ const App: React.FC = () => {
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  
+  const creationSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const provider = new JsonRpcProvider('https://base.publicnode.com', 8453);
@@ -48,6 +51,10 @@ const App: React.FC = () => {
 
   const handleConnectWallet = () => {
     setIsWalletModalOpen(true);
+  };
+  
+  const handleScrollToCreate = () => {
+    creationSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const handleSelectWallet = async (wallet: EIP6963ProviderDetail) => {
@@ -191,29 +198,54 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-background font-sans">
       <Header onConnectWallet={handleConnectWallet} accountAddress={accountAddress} onDisconnect={handleDisconnect} />
       <main className="container mx-auto px-4 py-12 md:py-16">
-        <h1 className="text-4xl md:text-5xl font-bold text-center font-display mb-10 animate-fade-in">
-          <span className="bg-gradient-to-r from-gradient-start to-gradient-end bg-clip-text text-transparent">
-            Create Your Token on the Base Network
-          </span>
-        </h1>
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          <div className="lg:col-span-3">
-            <TokenCreation 
-              accountAddress={accountAddress} 
-              provider={provider} 
-              baseFee={baseFee}
-              onTokenCreated={onTokenCreated}
-            />
+        {/* Hero Section */}
+        <section className="text-center">
+          <h1 className="text-4xl md:text-5xl font-bold font-display mb-2 animate-fade-in">
+            <span className="bg-gradient-to-r from-gradient-start to-gradient-end bg-clip-text text-transparent">
+              Create Your ERC20 Token on Base, Instantly
+            </span>
+          </h1>
+          <p className="text-xl md:text-2xl font-semibold text-text-primary mb-6 animate-fade-in" style={{animationDelay: '0.1s'}}>
+            Fast. Simple. All Yours.
+          </p>
+          <p className="text-lg md:text-xl text-text-secondary max-w-3xl mx-auto mb-10 animate-fade-in" style={{animationDelay: '0.2s'}}>
+            Create and deploy your custom ERC20 token in minutes. With our no-code creator, you have full ownership and control on the low-cost, high-speed Base network.
+          </p>
+          <div className="animate-fade-in" style={{animationDelay: '0.3s'}}>
+            <button
+                onClick={handleScrollToCreate}
+                className="bg-primary hover:bg-primary-hover text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 shadow-glow"
+            >
+              Start Creating
+            </button>
           </div>
-          <div className="lg:col-span-2">
-            <LatestTokens 
-              tokens={tokens} 
-              isLoading={isLoadingTokens} 
-              error={tokensError}
-              onRetry={fetchTokensFromAllTokensArray}
-            />
+        </section>
+
+        {/* Features Section */}
+        <Features />
+
+        {/* Creation Section */}
+        <section ref={creationSectionRef} className="pt-16 md:pt-24">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <div className="lg:col-span-3">
+              <TokenCreation 
+                accountAddress={accountAddress} 
+                provider={provider} 
+                baseFee={baseFee}
+                onTokenCreated={onTokenCreated}
+              />
+            </div>
+            <div className="lg:col-span-2">
+              <LatestTokens 
+                tokens={tokens} 
+                isLoading={isLoadingTokens} 
+                error={tokensError}
+                onRetry={fetchTokensFromAllTokensArray}
+              />
+            </div>
           </div>
-        </div>
+        </section>
+
       </main>
       <footer className="text-center py-6 mt-8">
         <p className="text-text-secondary text-sm">

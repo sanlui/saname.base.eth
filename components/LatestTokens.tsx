@@ -15,18 +15,23 @@ const timeAgo = (timestamp: number | undefined): string => {
     const now = Date.now();
     const seconds = Math.floor((now - timestamp) / 1000);
 
-    let interval = seconds / 31536000;
-    if (interval > 1) return Math.floor(interval) + " years ago";
-    interval = seconds / 2592000;
-    if (interval > 1) return Math.floor(interval) + " months ago";
-    interval = seconds / 86400;
-    if (interval > 1) return Math.floor(interval) + " days ago";
-    interval = seconds / 3600;
-    if (interval > 1) return Math.floor(interval) + " hours ago";
-    interval = seconds / 60;
-    if (interval > 1) return Math.floor(interval) + " mins ago";
     if (seconds < 10) return "just now";
-    return Math.floor(seconds) + " secs ago";
+    if (seconds < 60) return `${Math.floor(seconds)}s ago`;
+
+    const minutes = seconds / 60;
+    if (minutes < 60) return `${Math.floor(minutes)}m ago`;
+
+    const hours = minutes / 60;
+    if (hours < 24) return `${Math.floor(hours)}h ago`;
+
+    const days = hours / 24;
+    if (days < 30) return `${Math.floor(days)}d ago`;
+
+    const months = days / 30;
+    if (months < 12) return `${Math.floor(months)}mo ago`;
+
+    const years = days / 365;
+    return `${Math.floor(years)}y ago`;
 };
 
 
@@ -75,7 +80,7 @@ const LatestTokens: React.FC<LatestTokensProps> = ({ tokens, isLoading, error, o
       return (
         <tr>
           <td colSpan={4} className="text-center py-8 text-text-secondary">
-            <p>No tokens have been created yet.</p>
+            <p>Be the first to launch a token!</p>
           </td>
         </tr>
       );
@@ -113,15 +118,15 @@ const LatestTokens: React.FC<LatestTokensProps> = ({ tokens, isLoading, error, o
   }
 
   return (
-    <Card title="Latest Tokens Created">
+    <Card title="Live on Base">
       <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead className="border-b border-border text-text-secondary uppercase text-xs tracking-wider">
             <tr>
               <th className="p-3">Token</th>
               <th className="p-3">Creator</th>
-              <th className="p-3">Created</th>
-              <th className="p-3">Address</th>
+              <th className="p-3">Age</th>
+              <th className="p-3">Contract</th>
             </tr>
           </thead>
           <tbody>

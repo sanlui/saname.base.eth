@@ -32,8 +32,8 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, tokenDetai
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
             </div>
-          <h2 className="text-2xl font-bold text-text-primary font-display mb-2">Token Created Successfully!</h2>
-          <p className="text-text-secondary mb-6">Your new ERC20 token has been minted on the Base network.</p>
+          <h2 className="text-2xl font-bold text-text-primary font-display mb-2">Your Token is Live!</h2>
+          <p className="text-text-secondary mb-6">Congrats! Your ERC20 token is live on the Base network. Share it with your community!</p>
         </div>
 
         <div className="space-y-4 bg-background border border-border rounded-lg p-4 mb-6">
@@ -82,7 +82,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, tokenDetai
                 onClick={onClose}
                 className="w-full bg-border hover:bg-border/80 text-text-primary font-bold py-3 px-6 rounded-lg transition-all duration-300"
             >
-                Create Another Token
+                Create Another
             </button>
         </div>
       </div>
