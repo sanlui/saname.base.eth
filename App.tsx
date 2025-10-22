@@ -202,21 +202,20 @@ const App: React.FC = () => {
         <section className="text-center">
           <h1 className="text-4xl md:text-5xl font-bold font-display mb-2 animate-fade-in">
             <span className="bg-gradient-to-r from-gradient-start to-gradient-end bg-clip-text text-transparent">
-              Create Your ERC20 Token on Base, Instantly
+              Launch Your ERC20 Token on Base.
             </span>
+            <br />
+            <span className="text-3xl md:text-4xl">No Code. Full Control.</span>
           </h1>
-          <p className="text-xl md:text-2xl font-semibold text-text-primary mb-6 animate-fade-in" style={{animationDelay: '0.1s'}}>
-            Fast. Simple. All Yours.
-          </p>
           <p className="text-lg md:text-xl text-text-secondary max-w-3xl mx-auto mb-10 animate-fade-in" style={{animationDelay: '0.2s'}}>
-            Create and deploy your custom ERC20 token in minutes. With our no-code creator, you have full ownership and control on the low-cost, high-speed Base network.
+            Skip the complexity. Create, deploy, and own your ERC20 token on the high-speed, low-cost Base network. Your vision, launched in minutes.
           </p>
           <div className="animate-fade-in" style={{animationDelay: '0.3s'}}>
             <button
                 onClick={handleScrollToCreate}
                 className="bg-primary hover:bg-primary-hover text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 shadow-glow"
             >
-              Start Creating
+              Create Your Token Now
             </button>
           </div>
         </section>

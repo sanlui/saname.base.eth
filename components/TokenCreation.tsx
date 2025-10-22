@@ -149,7 +149,7 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
         <div className="p-6 md:p-8">
             <div className="border-b border-border pb-4 mb-6">
                 <h2 className="text-2xl font-bold text-text-primary font-display">Create Your Custom ERC20 Token</h2>
-                <p className="text-text-secondary mt-1">Fill in the details to deploy your token.</p>
+                <p className="text-text-secondary mt-1">Define your token's identity and launch it directly to the Base network.</p>
             </div>
             <form onSubmit={handleCreateToken} className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">

@@ -96,7 +96,7 @@ const LatestTokens: React.FC<LatestTokensProps> = ({ tokens, isLoading, error, o
             </td>
               <td className="p-3 font-mono text-xs">
                 {token.creator && token.creator !== 'N/A' ? (
-                  <a href={`https://basescan.org/address/${token.creator}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  <a href={`https://basescan.org/address/${token.creator}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" aria-label="View creator on Basescan">
                   {abbreviateAddress(token.creator)}
                 </a>
                 ) : (
@@ -107,7 +107,7 @@ const LatestTokens: React.FC<LatestTokensProps> = ({ tokens, isLoading, error, o
               {timeAgo(token.timestamp)}
             </td>
             <td className="p-3 font-mono text-xs">
-                <a href={`https://basescan.org/address/${token.address}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                <a href={`https://basescan.org/address/${token.address}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" aria-label="View token contract on Basescan">
                 {abbreviateAddress(token.address)}
               </a>
             </td>
