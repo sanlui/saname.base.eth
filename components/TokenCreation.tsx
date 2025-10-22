@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import SuccessModal from './SuccessModal';
 import { contractAddress, contractABI } from '../constants';
 import type { Token } from '../types';
@@ -16,11 +16,12 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
   const [tokenName, setTokenName] = useState('');
   const [tokenSymbol, setTokenSymbol] = useState('');
   const [tokenSupply, setTokenSupply] = useState('');
-  // Decimals are fixed at 18 for tokens created by this factory.
   const [isLoading, setIsLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [newTokenDetails, setNewTokenDetails] = useState<Token | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleCreateToken = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,6 +103,43 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
     setNewTokenDetails(null);
   }
 
+  const handleImageUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      setFeedback({ type: 'error', message: 'Invalid file type. Please use PNG, JPG, or GIF.' });
+      return;
+    }
+
+    const maxSizeInBytes = 2 * 1024 * 1024; // 2MB
+    if (file.size > maxSizeInBytes) {
+      setFeedback({ type: 'error', message: 'File is too large. Maximum size is 2MB.' });
+      return;
+    }
+    
+    setFeedback(null);
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+  
+  const handleRemoveImage = (e: React.MouseEvent) => {
+      e.stopPropagation(); 
+      setImagePreview(null);
+      if(fileInputRef.current) {
+          fileInputRef.current.value = ""; 
+      }
+  }
+
   const inputStyles = "w-full bg-background border border-border rounded-lg p-3 text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-primary transition duration-200";
   const labelStyles = "block text-sm font-medium text-text-secondary mb-2";
 
@@ -110,12 +148,44 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
       <div className="bg-surface border border-border rounded-xl shadow-lg p-6 md:p-8 animate-fade-in">
         <form onSubmit={handleCreateToken} className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                <div className="lg:col-span-2 flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-lg text-center h-full min-h-[200px]">
-                    <svg className="w-10 h-10 text-text-secondary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
-                    </svg>
-                    <h3 className="font-semibold mt-2 text-text-primary">Upload Coin Image</h3>
-                    <p className="text-sm text-text-secondary mt-1">PNG, JPG, GIF up to 2MB</p>
+                <div 
+                    className="relative lg:col-span-2 flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-lg text-center h-full min-h-[200px] cursor-pointer hover:border-primary transition-colors"
+                    onClick={handleImageUploadClick}
+                    onKeyDown={(e) => e.key === 'Enter' && handleImageUploadClick()}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Upload coin image"
+                >
+                    <input 
+                        type="file" 
+                        ref={fileInputRef}
+                        onChange={handleImageChange}
+                        accept="image/png, image/jpeg, image/gif"
+                        className="hidden"
+                    />
+                    {imagePreview ? (
+                        <>
+                            <img src={imagePreview} alt="Coin preview" className="w-full h-full max-h-[180px] object-contain rounded-lg" />
+                            <button 
+                                type="button" 
+                                onClick={handleRemoveImage}
+                                className="absolute top-2 right-2 bg-black bg-opacity-60 text-white rounded-full p-1 hover:bg-opacity-80 transition-colors"
+                                aria-label="Remove image"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <svg className="w-10 h-10 text-text-secondary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                            </svg>
+                            <h3 className="font-semibold mt-2 text-text-primary">Upload Coin Image</h3>
+                            <p className="text-sm text-text-secondary mt-1">PNG, JPG, GIF up to 2MB</p>
+                        </>
+                    )}
                 </div>
                 <div className="lg:col-span-3 space-y-4">
                      <div>
