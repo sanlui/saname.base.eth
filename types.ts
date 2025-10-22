@@ -1,4 +1,3 @@
-
 export interface Token {
   name: string;
   symbol: string;
@@ -10,10 +9,11 @@ export interface Token {
   decimals?: number;
 }
 
+// Fix: Added missing Creator interface.
 export interface Creator {
-  rank: number;
   address: string;
   tokensCreated: number;
+  rank: number;
 }
 
 // EIP-6963 Types
