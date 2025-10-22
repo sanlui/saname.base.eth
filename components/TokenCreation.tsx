@@ -10,7 +10,7 @@ interface TokenCreationProps {
   accountAddress: string | null;
   provider: BrowserProvider | null;
   baseFee: string | null;
-  onTokenCreated: (event: any) => void;
+  onTokenCreated: () => void;
 }
 
 const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider, baseFee, onTokenCreated }) => {
@@ -67,8 +67,8 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
       }
       
       if (parsedEvent && parsedEvent.args) {
-          // Guaranteed UI update by passing the confirmed event data up to the parent.
-          onTokenCreated(parsedEvent);
+          // Trigger a refresh of the token list in the parent component.
+          onTokenCreated();
 
           const createdToken: Token = {
               name: parsedEvent.args.name,
@@ -112,7 +112,7 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
       <Card title="Create Your ERC20 Token">
         <div className="text-center p-8 border-2 border-dashed border-border rounded-lg">
           <svg className="mx-auto h-12 w-12 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m12 0V6a2.25 2.25 0 00-2.25-2.25H9.75A2.25 2.25 0 007.5 6v3" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25-2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m12 0V6a2.25 2.25 0 00-2.25-2.25H9.75A2.25 2.25 0 007.5 6v3" />
           </svg>
           <p className="mt-4 text-lg text-text-secondary">Please connect your wallet to create a token.</p>
         </div>

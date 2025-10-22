@@ -4,7 +4,7 @@ import Header from './components/Header';
 import TokenCreation from './components/TokenCreation';
 import LatestTokens from './components/LatestTokens';
 import WalletSelectionModal from './components/WalletSelectionModal';
-import { contractAddress, contractABI } from './constants';
+import { contractAddress, contractABI, erc20ABI } from './constants';
 import type { Token, EIP6963ProviderDetail, EIP6963AnnounceProviderEvent } from './types';
 import { ethers, Contract, BrowserProvider, JsonRpcProvider } from 'ethers';
 
@@ -15,10 +15,11 @@ const App: React.FC = () => {
   const [tokens, setTokens] = useState<Token[]>([]);
   const [isLoadingTokens, setIsLoadingTokens] = useState(true);
   const [baseFee, setBaseFee] = useState<string | null>(null);
-  const [allEventsWithTimestamps, setAllEventsWithTimestamps] = useState<any[]>([]);
   
   const [availableWallets, setAvailableWallets] = useState<EIP6963ProviderDetail[]>([]);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   useEffect(() => {
     // Simplify to a single, reliable provider to avoid quorum issues and parallel request limits.
@@ -46,116 +47,102 @@ const App: React.FC = () => {
   };
 
   const handleSelectWallet = async (wallet: EIP6963ProviderDetail) => {
-    setIsWalletModalOpen(false);
+    setIsConnecting(true);
+    setConnectionError(null);
     try {
       const newProvider = new BrowserProvider(wallet.provider);
       const signer = await newProvider.getSigner();
       const address = await signer.getAddress();
       setAccountAddress(address);
       setProvider(newProvider);
+      setIsWalletModalOpen(false); // Close on success
     } catch (error) {
       console.error("Error connecting to wallet:", error);
-      alert("Failed to connect wallet. Please check the console for more details.");
+      setConnectionError("Failed to connect wallet. Please try again or choose a different wallet.");
+    } finally {
+      setIsConnecting(false);
     }
   };
-  
-  const processDataFromTimestampedEvents = useCallback(async (events: any[]) => {
-      setIsLoadingTokens(true);
 
-      // --- Process for Latest Tokens (Screenshot UI) ---
-      const latestTokens = events.slice(0, 10);
-      const formattedTokens: Token[] = latestTokens.map(event => ({
-        creator: event.args!.creator,
-        address: event.args!.tokenAddress,
-        name: event.args!.name,
-        symbol: event.args!.symbol,
-        supply: event.args!.supply.toString(),
-        timestamp: event.timestamp,
-      }));
-      setTokens(formattedTokens);
-      setIsLoadingTokens(false);
-  }, []);
+  const handleCloseWalletModal = () => {
+    setIsWalletModalOpen(false);
+    setConnectionError(null); // Reset error on close
+  };
 
-  const fetchInitialChainData = useCallback(async () => {
+  const fetchTokensFromAllTokensArray = useCallback(async () => {
     if (!readOnlyProvider) return;
     
+    setIsLoadingTokens(true);
     try {
-      setIsLoadingTokens(true);
+        const contract = new Contract(contractAddress, contractABI, readOnlyProvider);
 
-      const contract = new Contract(contractAddress, contractABI, readOnlyProvider);
+        if (!baseFee) {
+            const fee = await contract.baseFee();
+            setBaseFee(ethers.formatEther(fee));
+        }
 
-      if (!baseFee) {
-        const fee = await contract.baseFee();
-        setBaseFee(ethers.formatEther(fee));
-      }
-      
-      const filter = await contract.filters.TokenCreated();
-      const latestBlock = await readOnlyProvider.getBlockNumber();
-      const startingBlock = 3713640;
-      // CRITICAL FIX: Use a very conservative chunk size and delay to be compatible with free RPC providers.
-      const chunkSize = 499;
-      let pastEvents = [];
+        const totalTokensBigInt = await contract.totalTokensCreated();
+        const totalTokens = Number(totalTokensBigInt);
+        
+        const BATCH_SIZE = 50;
+        const fetchedTokens: Token[] = [];
 
-      for (let i = startingBlock; i <= latestBlock; i += chunkSize) {
-          const fromBlock = i;
-          const toBlock = Math.min(i + chunkSize - 1, latestBlock);
-          const chunkEvents = await contract.queryFilter(filter, fromBlock, toBlock);
-          pastEvents.push(...chunkEvents);
-          // Add a longer delay to prevent rate-limiting
-          await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-      
-      const blockNumbers = [...new Set(pastEvents.map(e => e.blockNumber))];
-      const blockMap = new Map<number, any>();
-      
-      // CRITICAL FIX: Fetch block data in batches to avoid overwhelming the RPC provider with a burst of requests.
-      const blockBatchSize = 10;
-      for (let i = 0; i < blockNumbers.length; i += blockBatchSize) {
-        const batch = blockNumbers.slice(i, i + blockBatchSize);
-        const blockPromises = batch.map(num => readOnlyProvider.getBlock(num));
-        const resolvedBlocks = await Promise.all(blockPromises);
-        resolvedBlocks.forEach(block => {
-            if (block) blockMap.set(block.number, block);
-        });
-        // Add a delay between batches to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
+        // Fetch in batches to be considerate to the RPC provider
+        for (let i = 0; i < totalTokens; i += BATCH_SIZE) {
+            const batchPromises: Promise<string>[] = [];
+            const end = Math.min(i + BATCH_SIZE, totalTokens);
+            for (let j = i; j < end; j++) {
+                batchPromises.push(contract.allTokens(j));
+            }
+            
+            const tokenAddresses = await Promise.all(batchPromises);
+            
+            // Fix: Add explicit return type Promise<Token | null> to the async map callback.
+            // This ensures TypeScript infers the correct type for `resolvedTokens`, resolving the type predicate error.
+            const detailPromises = tokenAddresses.map(async (address: string): Promise<Token | null> => {
+                 try {
+                    const tokenContract = new Contract(address, erc20ABI, readOnlyProvider);
+                    const [name, symbol, supply] = await Promise.all([
+                        tokenContract.name(),
+                        tokenContract.symbol(),
+                        tokenContract.totalSupply(),
+                    ]);
+                    
+                    return {
+                        address,
+                        name,
+                        symbol,
+                        supply: supply.toString(),
+                        creator: 'N/A', // Creator info is not available through this method
+                        timestamp: undefined, // Timestamp is not available
+                    };
+                } catch (error) {
+                    console.error(`Error fetching details for token ${address}:`, error);
+                    return null;
+                }
+            });
 
-      const eventsWithTimestamps = pastEvents.map(event => ({
-        ...event,
-        timestamp: blockMap.get(event.blockNumber)!.timestamp * 1000,
-      }));
-      
-      const sortedEvents = [...eventsWithTimestamps].sort((a, b) => b.blockNumber - a.blockNumber || b.logIndex - a.logIndex);
-      
-      setAllEventsWithTimestamps(sortedEvents);
+            const resolvedTokens = await Promise.all(detailPromises);
+            const validTokensInBatch = resolvedTokens.filter((t): t is Token => t !== null);
+            fetchedTokens.push(...validTokensInBatch);
+        }
+
+        // Sort tokens to show newest first (by reversing the array since contract stores oldest first)
+        const sortedTokens = fetchedTokens.reverse();
+        setTokens(sortedTokens);
 
     } catch (error) {
-      console.error("Error fetching chain data:", error);
-      setIsLoadingTokens(false);
+        console.error("Error fetching tokens from allTokens array:", error);
+    } finally {
+        setIsLoadingTokens(false);
     }
-  }, [readOnlyProvider, baseFee]);
+}, [readOnlyProvider, baseFee]);
   
   useEffect(() => {
     if(readOnlyProvider) {
-      fetchInitialChainData();
+      fetchTokensFromAllTokensArray();
     }
-  }, [readOnlyProvider, fetchInitialChainData]);
-
-  useEffect(() => {
-    if (allEventsWithTimestamps.length > 0) {
-        processDataFromTimestampedEvents(allEventsWithTimestamps);
-    } else {
-      const loadingStates = [isLoadingTokens];
-      if (loadingStates.some(Boolean)) {
-         setTimeout(() => {
-           if(allEventsWithTimestamps.length === 0) {
-              setIsLoadingTokens(false);
-           }
-         }, 2000);
-      }
-    }
-  }, [allEventsWithTimestamps, processDataFromTimestampedEvents, isLoadingTokens]);
+  }, [readOnlyProvider, fetchTokensFromAllTokensArray]);
 
   useEffect(() => {
     const handleAccountsChanged = (accounts: string[]) => {
@@ -178,43 +165,19 @@ const App: React.FC = () => {
     };
   }, [provider]);
   
-  const onTokenCreated = useCallback((eventFromReceipt: any) => {
-    const addEvent = async () => {
-      if (!readOnlyProvider) return;
-
-      const exists = allEventsWithTimestamps.some(
-        (e) => e.transactionHash === eventFromReceipt.transactionHash && e.logIndex === eventFromReceipt.logIndex
-      );
-
-      if (exists) return;
-
-      try {
-        const block = await readOnlyProvider.getBlock(eventFromReceipt.blockNumber);
-        const newEventObject = {
-          ...eventFromReceipt,
-          timestamp: block!.timestamp * 1000,
-        };
-        setAllEventsWithTimestamps((prevEvents) => [newEventObject, ...prevEvents].sort((a, b) => b.blockNumber - a.blockNumber || b.logIndex - a.logIndex));
-      } catch (error) {
-        console.error("Error fetching block for new event:", error);
-      }
-    };
-
-    addEvent();
-  }, [allEventsWithTimestamps, readOnlyProvider]);
+  const onTokenCreated = useCallback(() => {
+    // A new token was created, so we re-fetch the whole list to ensure consistency.
+    setTimeout(fetchTokensFromAllTokensArray, 1000); // Add a small delay for chain propagation
+  }, [fetchTokensFromAllTokensArray]);
 
   useEffect(() => {
     if (!readOnlyProvider) return;
     
     const contract = new Contract(contractAddress, contractABI, readOnlyProvider);
     
-    const handleNewToken = async (...args: any[]) => {
-        const event = args[args.length - 1];
-        const parsedEvent = {
-            ...event,
-            args: contract.interface.parseLog(event).args,
-        };
-        onTokenCreated(parsedEvent);
+    const handleNewToken = () => {
+      // New token detected, refresh the list.
+      onTokenCreated();
     };
 
     contract.on('TokenCreated', handleNewToken);
@@ -240,9 +203,11 @@ const App: React.FC = () => {
       </main>
       <WalletSelectionModal
         isOpen={isWalletModalOpen}
-        onClose={() => setIsWalletModalOpen(false)}
+        onClose={handleCloseWalletModal}
         wallets={availableWallets}
         onSelectWallet={handleSelectWallet}
+        isConnecting={isConnecting}
+        error={connectionError}
       />
     </div>
   );

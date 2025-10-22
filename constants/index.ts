@@ -1,6 +1,12 @@
 
 export const contractAddress = '0x4e9ec042f7d74ab1006b11dab61893388b3a19dd';
 
+export const erc20ABI = [
+  'function name() view returns (string)',
+  'function symbol() view returns (string)',
+  'function totalSupply() view returns (uint256)',
+];
+
 export const contractABI = [
 	{
 		"inputs": [
@@ -249,8 +255,7 @@ export const contractABI = [
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "",
-				"type": "address"
+				"name": ""
 			}
 		],
 		"name": "isTokenFromFactory",
@@ -281,8 +286,7 @@ export const contractABI = [
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "",
-				"type": "address"
+				"name": ""
 			}
 		],
 		"name": "pendingWithdrawals",
@@ -313,8 +317,7 @@ export const contractABI = [
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "",
-				"type": "address"
+				"name": ""
 			}
 		],
 		"name": "userCreatedSupply",

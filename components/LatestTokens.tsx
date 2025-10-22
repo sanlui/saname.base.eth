@@ -46,7 +46,7 @@ const LatestTokens: React.FC<LatestTokensProps> = ({ tokens, isLoading }) => {
     if (tokens.length === 0) {
       return (
         <div className="text-center py-8 text-text-secondary">
-          <p>No tokens have been created recently.</p>
+          <p>No tokens have been created yet.</p>
         </div>
       );
     }
@@ -70,9 +70,13 @@ const LatestTokens: React.FC<LatestTokensProps> = ({ tokens, isLoading }) => {
                     <div className="text-sm text-text-secondary">{token.symbol}</div>
                 </td>
                  <td className="p-4 font-mono text-sm">
-                   <a href={`https://basescan.org/address/${token.creator}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                    {abbreviateAddress(token.creator)}
-                  </a>
+                   {token.creator && token.creator !== 'N/A' ? (
+                     <a href={`https://basescan.org/address/${token.creator}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                      {abbreviateAddress(token.creator)}
+                    </a>
+                   ) : (
+                     <span className="text-text-secondary">N/A</span>
+                   )}
                 </td>
                 <td className="p-4 text-sm text-text-secondary">{timeAgo(token.timestamp)}</td>
                  <td className="p-4 font-mono text-sm">
