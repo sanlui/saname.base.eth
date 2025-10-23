@@ -36,6 +36,16 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
       return;
     }
 
+    if (tokenName.length > 50) {
+      setFeedback({ type: 'error', message: 'Token name cannot exceed 50 characters.' });
+      return;
+    }
+
+    if (tokenSymbol.length > 10) {
+      setFeedback({ type: 'error', message: 'Token symbol cannot exceed 10 characters.' });
+      return;
+    }
+
     setIsLoading(true);
     setFeedback(null);
 
@@ -204,12 +214,12 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
                     <div className="lg:col-span-3 space-y-4">
                          <div>
                             <label htmlFor="tokenName" className={labelStyles}>Token Name *</label>
-                            <input type="text" id="tokenName" value={tokenName} onChange={(e) => setTokenName(e.target.value)} placeholder="e.g. Galactic Credits" className={inputStyles} required />
+                            <input type="text" id="tokenName" value={tokenName} onChange={(e) => setTokenName(e.target.value)} placeholder="e.g. Galactic Credits" className={inputStyles} required maxLength={50} />
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label htmlFor="tokenSymbol" className={labelStyles}>Symbol *</label>
-                                <input type="text" id="tokenSymbol" value={tokenSymbol} onChange={(e) => setTokenSymbol(e.target.value)} placeholder="e.g. GLX" className={inputStyles} required />
+                                <input type="text" id="tokenSymbol" value={tokenSymbol} onChange={(e) => setTokenSymbol(e.target.value)} placeholder="e.g. GLX" className={inputStyles} required maxLength={10} />
                             </div>
                             <div>
                                 <label htmlFor="tokenSupply" className={labelStyles}>Total Supply *</label>
@@ -237,11 +247,15 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
                 </div>
 
                 <div className="border-t border-border pt-6">
-                    <div className="text-center mb-4 min-h-[90px]">
+                    <div className="text-center mb-4 min-h-[120px]">
                         <p className="text-sm text-text-primary">
                           Deployment Fee: <span className="font-mono text-green-400 font-bold">{baseFee ? `${baseFee} ETH` : 'Loading...'}</span>
                         </p>
                         <p className="text-xs text-text-secondary mt-1">One-time fee to launch on Base. No hidden costs.</p>
+                        
+                        <p className="text-xs text-text-secondary mt-4">
+                          By proceeding, you acknowledge you are deploying a smart contract and assume all responsibility for the token created.
+                        </p>
                         
                         {!accountAddress && (
                              <p className="text-yellow-400 font-semibold mt-4">Please connect your wallet to create a token.</p>

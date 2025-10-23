@@ -27,8 +27,8 @@ const Features: React.FC = () => {
                    <path d="M15 9m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
                 </svg>
               }
-              title="Instant Deployment"
-              children="Launch your token in seconds. No waiting, no complex steps. Just pure speed on the Base network."
+              title="Efficient Deployment"
+              children="Deploy your token in minutes. Our streamlined process removes complex steps, leveraging the speed of the Base network."
             />
         </div>
         <div className="animate-fade-in" style={{animationDelay: '0.5s'}}>

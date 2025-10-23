@@ -19,6 +19,11 @@ const announceProvider = () => {
   }
 };
 
+const createSignatureMessage = (nonce: string): string => {
+  return `Welcome to Disrole!\n\nPlease sign this message to securely connect your wallet. This action is free and will not trigger a transaction.\n\nNonce: ${nonce}`;
+};
+
+
 const App: React.FC = () => {
   const [accountAddress, setAccountAddress] = useState<string | null>(null);
   const [provider, setProvider] = useState<BrowserProvider | null>(null);
@@ -79,12 +84,31 @@ const App: React.FC = () => {
       const signer = await newProvider.getSigner();
       const address = await signer.getAddress();
       
+      // --- New Signature Flow ---
+      const nonce = crypto.randomUUID();
+      const message = createSignatureMessage(nonce);
+
+      const signature = await signer.signMessage(message);
+
+      const recoveredAddress = ethers.verifyMessage(message, signature);
+
+      if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
+        throw new Error("Signature verification failed. Address mismatch.");
+      }
+      // --- End of Signature Flow ---
+      
       setAccountAddress(address);
       setProvider(newProvider);
       setIsModalOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error connecting to wallet:", error);
-      setConnectionError("Failed to connect wallet. User rejected the request or an error occurred.");
+      let errorMessage = "Failed to connect wallet. An unexpected error occurred.";
+      if (error.code === 'ACTION_REJECTED' || (error.reason && error.reason.toLowerCase().includes('user rejected'))) {
+          errorMessage = "Connection or signature request was rejected in your wallet.";
+      } else if (error.message && error.message.includes("Signature verification failed")) {
+          errorMessage = "Could not verify wallet ownership. Please try connecting again.";
+      }
+      setConnectionError(errorMessage);
     } finally {
       setIsConnecting(false);
     }
@@ -222,14 +246,14 @@ const App: React.FC = () => {
         <section className="text-center">
           <h1 className="text-4xl md:text-5xl font-bold font-display mb-2 animate-fade-in">
             <span className="bg-gradient-to-r from-gradient-start to-gradient-end bg-clip-text text-transparent">
-              Create Your ERC20 Token on Base, Instantly
+              Launch Your ERC20 Token on the Base Network
             </span>
           </h1>
           <p className="text-2xl md:text-3xl font-bold font-display mb-4 text-text-primary animate-fade-in" style={{ animationDelay: '0.1s' }}>
-            Fast. Simple. All Yours.
+            Secure. Simple. All Yours.
           </p>
           <p className="text-lg md:text-xl text-text-secondary max-w-3xl mx-auto mb-10 animate-fade-in" style={{animationDelay: '0.2s'}}>
-            Our no-code tool empowers you to launch a custom ERC20 token in minutes, with full ownership and control on the fast, low-cost Base network.
+            Our secure, no-code tool empowers you to deploy a custom ERC20 token in minutes. You get full ownership and control, all on the fast and low-cost Base network.
           </p>
           <div className="animate-fade-in" style={{animationDelay: '0.3s'}}>
             <button
