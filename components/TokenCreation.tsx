@@ -92,8 +92,14 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
 
     } catch (error: any) {
       console.error("Error creating token:", error);
-      const errorMessage = error.reason || "An unexpected error occurred. Check the console.";
-      setFeedback({ type: 'error', message: `Transaction error: ${errorMessage}` });
+      let message = "An unexpected error occurred. Please try again or check the console for details.";
+      // Check for user rejection first
+      if (error.code === 'ACTION_REJECTED' || (error.reason && error.reason.toLowerCase().includes('user rejected'))) {
+          message = "Transaction cancelled in wallet.";
+      } else if (error.reason && error.reason.toLowerCase().includes('insufficient funds')) {
+          message = "Transaction failed. Please ensure your wallet has enough ETH for the fee and gas costs.";
+      }
+      setFeedback({ type: 'error', message });
     } finally {
       setIsLoading(false);
     }

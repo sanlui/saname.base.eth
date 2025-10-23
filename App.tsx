@@ -229,7 +229,7 @@ const App: React.FC = () => {
             Fast. Simple. All Yours.
           </p>
           <p className="text-lg md:text-xl text-text-secondary max-w-3xl mx-auto mb-10 animate-fade-in" style={{animationDelay: '0.2s'}}>
-            Launch your custom ERC20 token in minutes. Our no-code tool gives you full ownership and control on the fast, low-cost Base network.
+            Our no-code tool empowers you to launch a custom ERC20 token in minutes, with full ownership and control on the fast, low-cost Base network.
           </p>
           <div className="animate-fade-in" style={{animationDelay: '0.3s'}}>
             <button
