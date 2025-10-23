@@ -66,11 +66,6 @@ const App: React.FC = () => {
     setProvider(null);
   };
 
-const handleConnectWallet = () => {
-  setConnectionError(null);
-  setIsModalOpen(true);
-};
-
 const handleSelectWallet = async (wallet: EIP6963ProviderDetail) => {
   if (isConnecting) return; // evita doppie chiamate
   setConnectionError(null);
@@ -81,19 +76,26 @@ const handleSelectWallet = async (wallet: EIP6963ProviderDetail) => {
     const signer = await newProvider.getSigner();
     const address = await signer.getAddress();
 
+    // --- RICHIESTA DI FIRMA ---
+    const message = "Sign this message to connect to Disrole.";
+    const signature = await signer.signMessage(message);
+    console.log("User signed:", signature);
+    // Puoi eventualmente inviare signature al backend per verifica
+
     setAccountAddress(address);
     setProvider(newProvider);
 
     // Chiudi la modale con delay minimo per transizione fluida
     setTimeout(() => setIsModalOpen(false), 200);
   } catch (error) {
-    console.error("Error connecting to wallet:", error);
-    setConnectionError("Failed to connect wallet. User rejected the request or an error occurred.");
+    console.error("Error connecting wallet or signing:", error);
+    setConnectionError("Failed to connect wallet or sign the message.");
   } finally {
     // Assicurati di rimanere con isConnecting true almeno 300ms per UX stabile
     setTimeout(() => setIsConnecting(false), 300);
   }
 };
+
 
   
   const handleScrollToCreate = () => {
