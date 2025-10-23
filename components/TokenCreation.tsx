@@ -191,22 +191,22 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
                                 </svg>
                                 <p className="font-semibold mt-2 text-text-primary">Upload Token Icon</p>
-                                <p className="text-sm text-text-secondary mt-1">PNG, JPG, or GIF. Max 2MB.</p>
+                                <p className="text-sm text-text-secondary mt-1">(Optional) PNG, JPG, or GIF.</p>
                             </>
                         )}
                     </div>
                     <div className="lg:col-span-3 space-y-4">
                          <div>
-                            <label htmlFor="tokenName" className={labelStyles}>Token Name</label>
+                            <label htmlFor="tokenName" className={labelStyles}>Token Name *</label>
                             <input type="text" id="tokenName" value={tokenName} onChange={(e) => setTokenName(e.target.value)} placeholder="e.g. Galactic Credits" className={inputStyles} required />
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label htmlFor="tokenSymbol" className={labelStyles}>Ticker</label>
+                                <label htmlFor="tokenSymbol" className={labelStyles}>Ticker *</label>
                                 <input type="text" id="tokenSymbol" value={tokenSymbol} onChange={(e) => setTokenSymbol(e.target.value)} placeholder="e.g. GLX" className={inputStyles} required />
                             </div>
                             <div>
-                                <label htmlFor="tokenSupply" className={labelStyles}>Total Supply</label>
+                                <label htmlFor="tokenSupply" className={labelStyles}>Total Supply *</label>
                                 <input type="number" id="tokenSupply" value={tokenSupply} onChange={(e) => setTokenSupply(e.target.value)} placeholder="1000000" min="1" className={inputStyles} required />
                             </div>
                         </div>
@@ -214,7 +214,7 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
                             <div>
                                 <label htmlFor="tokenStandard" className={labelStyles}>Token Standard</label>
                                  <div className="relative">
-                                    <select id="tokenStandard" className={inputStyles + ' appearance-none pr-8'}>
+                                    <select id="tokenStandard" className={inputStyles + ' appearance-none pr-8 bg-background cursor-not-allowed'}>
                                         <option>ERC20</option>
                                     </select>
                                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-text-secondary">
@@ -224,23 +224,14 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
                             </div>
                             <div>
                                 <label htmlFor="blockchainNetwork" className={labelStyles}>Blockchain Network</label>
-                                <div className={inputStyles}>Base Mainnet</div>
+                                <div className={inputStyles + ' bg-background cursor-not-allowed'}>Base Mainnet</div>
                             </div>
                         </div>
                     </div>
                 </div>
-                
-                <div>
-                    <label htmlFor="description" className={labelStyles}>Description (Optional)</label>
-                    <textarea id="description" rows={3} placeholder="e.g. The official currency for the Galactic Empire." className={inputStyles}></textarea>
-                </div>
-                <div>
-                    <label htmlFor="iconUrl" className={labelStyles}>Icon URL (Optional)</label>
-                    <input type="url" id="iconUrl" placeholder="https://example.com/token-image.png" className={inputStyles} />
-                </div>
 
                 <div className="border-t border-border pt-6">
-                    <div className="text-center mb-4">
+                    <div className="text-center mb-4 min-h-[90px]">
                         <p className="text-sm text-text-primary">
                           Deployment Fee: <span className="font-mono text-green-400 font-bold">{baseFee ? `${baseFee} ETH` : 'Loading...'}</span>
                         </p>

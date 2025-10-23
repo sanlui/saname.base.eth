@@ -1,19 +1,23 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import TokenCreation from './components/TokenCreation';
 import LatestTokens from './components/LatestTokens';
 import Features from './components/Features';
 import Footer from './components/Footer';
+import WalletSelectionModal from './components/WalletSelectionModal';
 import { contractAddress, contractABI, erc20ABI } from './constants';
-import type { Token } from './types';
+import type { Token, EIP6963ProviderDetail } from './types';
 import { ethers, Contract, BrowserProvider, JsonRpcProvider } from 'ethers';
 
-// Define ethereum on the window object for TypeScript
-declare global {
-  interface Window {
-    ethereum?: any;
+// Announce that the app is ready to receive wallet provider info
+const announceProvider = () => {
+  try {
+    window.dispatchEvent(new Event('eip6963:requestProvider'));
+  } catch (error) {
+    console.error('Could not dispatch eip6963:requestProvider event.', error);
   }
-}
+};
 
 const App: React.FC = () => {
   const [accountAddress, setAccountAddress] = useState<string | null>(null);
@@ -25,6 +29,10 @@ const App: React.FC = () => {
   const [baseFee, setBaseFee] = useState<string | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   
+  const [wallets, setWallets] = useState<EIP6963ProviderDetail[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+
   const creationSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -32,28 +40,53 @@ const App: React.FC = () => {
     setReadOnlyProvider(provider);
   }, []);
 
+  // EIP-6963 Wallet Discovery
+  useEffect(() => {
+    const handleAnnounceProvider = (event: any) => {
+      const providerDetail: EIP6963ProviderDetail = event.detail;
+      setWallets(currentWallets => {
+        if (currentWallets.some(w => w.info.uuid === providerDetail.info.uuid)) {
+          return currentWallets;
+        }
+        return [...currentWallets, providerDetail];
+      });
+    };
+
+    window.addEventListener('eip6963:announceProvider', handleAnnounceProvider);
+    announceProvider();
+
+    return () => {
+      window.removeEventListener('eip6963:announceProvider', handleAnnounceProvider);
+    };
+  }, []);
+
+
   const handleDisconnect = () => {
     setAccountAddress(null);
     setProvider(null);
   };
 
-  const handleConnectWallet = async () => {
+  const handleConnectWallet = () => {
     setConnectionError(null);
-    if (typeof window.ethereum !== "undefined") {
-        try {
-            const newProvider = new BrowserProvider(window.ethereum);
-            await newProvider.send("eth_requestAccounts", []);
-            const signer = await newProvider.getSigner();
-            const address = await signer.getAddress();
-            setAccountAddress(address);
-            setProvider(newProvider);
-        } catch (error) {
-            console.error("Error connecting to wallet:", error);
-            setConnectionError("Failed to connect wallet. User rejected the request or an error occurred.");
-        }
-    } else {
-        console.log("No wallet provider found.");
-        setConnectionError("No wallet detected. Please install a browser extension like MetaMask or Coinbase Wallet.");
+    setIsModalOpen(true);
+  };
+
+  const handleSelectWallet = async (wallet: EIP6963ProviderDetail) => {
+    setConnectionError(null);
+    setIsConnecting(true);
+    try {
+      const newProvider = new BrowserProvider(wallet.provider);
+      const signer = await newProvider.getSigner();
+      const address = await signer.getAddress();
+      
+      setAccountAddress(address);
+      setProvider(newProvider);
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error("Error connecting to wallet:", error);
+      setConnectionError("Failed to connect wallet. User rejected the request or an error occurred.");
+    } finally {
+      setIsConnecting(false);
     }
   };
   
@@ -143,16 +176,16 @@ const App: React.FC = () => {
       }
     };
 
-    if (window.ethereum && window.ethereum.on) {
-        window.ethereum.on('accountsChanged', handleAccountsChanged);
+    if (provider && provider.provider && provider.provider.on) {
+        provider.provider.on('accountsChanged', handleAccountsChanged);
     }
 
     return () => {
-      if (window.ethereum && window.ethereum.removeListener) {
-        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+      if (provider && provider.provider && provider.provider.removeListener) {
+        provider.provider.removeListener('accountsChanged', handleAccountsChanged);
       }
     };
-  }, []);
+  }, [provider]);
   
   const onTokenCreated = useCallback(() => {
     setTimeout(fetchTokensFromAllTokensArray, 1000);
@@ -178,7 +211,7 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-background font-sans flex flex-col">
       <Header onConnectWallet={handleConnectWallet} accountAddress={accountAddress} onDisconnect={handleDisconnect} />
       <main className="container mx-auto px-4 py-12 md:py-16 flex-grow">
-        {connectionError && (
+        {connectionError && !isModalOpen && (
           <div className="text-center p-3 rounded-lg text-sm break-words my-4 bg-error/20 text-red-300 animate-fade-in flex justify-between items-center max-w-3xl mx-auto">
               <span>{connectionError}</span>
               <button onClick={() => setConnectionError(null)} className="ml-4 font-bold p-1 rounded-full hover:bg-white/10" aria-label="Close error message">&times;</button>
@@ -235,6 +268,14 @@ const App: React.FC = () => {
 
       </main>
       <Footer />
+      <WalletSelectionModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        wallets={wallets}
+        onSelectWallet={handleSelectWallet}
+        isConnecting={isConnecting}
+        error={connectionError}
+      />
     </div>
   );
 };

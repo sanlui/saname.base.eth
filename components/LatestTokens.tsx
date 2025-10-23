@@ -1,5 +1,6 @@
 
-import React from 'react';
+
+import React, { useState } from 'react';
 import type { Token } from '../types';
 import Card from './Card';
 
@@ -9,6 +10,8 @@ interface LatestTokensProps {
   error: string | null;
   onRetry: () => void;
 }
+
+const TOKENS_PER_PAGE = 10;
 
 const timeAgo = (timestamp: number | undefined): string => {
     if (timestamp === undefined) return 'N/A';
@@ -36,6 +39,21 @@ const timeAgo = (timestamp: number | undefined): string => {
 
 
 const LatestTokens: React.FC<LatestTokensProps> = ({ tokens, isLoading, error, onRetry }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  const totalPages = Math.ceil(tokens.length / TOKENS_PER_PAGE);
+  const startIndex = (currentPage - 1) * TOKENS_PER_PAGE;
+  const endIndex = startIndex + TOKENS_PER_PAGE;
+  const paginatedTokens = tokens.slice(startIndex, endIndex);
+
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(prev + 1, totalPages));
+  };
+
+  const handlePrevPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 1));
+  };
+  
   const abbreviateAddress = (address: string) => {
     if (!address) return '';
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
@@ -88,7 +106,7 @@ const LatestTokens: React.FC<LatestTokensProps> = ({ tokens, isLoading, error, o
 
     return (
       <>
-        {tokens.slice(0, 10).map((token) => (
+        {paginatedTokens.map((token) => (
           <tr key={token.address} className="border-b border-border hover:bg-white/5 transition-colors">
             <td className="p-3">
                 <div className="font-semibold text-text-primary text-sm">{token.name}</div>
@@ -117,10 +135,38 @@ const LatestTokens: React.FC<LatestTokensProps> = ({ tokens, isLoading, error, o
     );
   }
 
+  const renderPagination = () => {
+    if (isLoading || error || tokens.length <= TOKENS_PER_PAGE) {
+      return null;
+    }
+
+    return (
+      <div className="flex justify-between items-center p-3 text-sm border-t border-border">
+        <button
+          onClick={handlePrevPage}
+          disabled={currentPage === 1}
+          className="bg-border hover:bg-border/80 text-text-primary font-semibold py-1.5 px-3 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Previous
+        </button>
+        <span className="text-text-secondary">
+          Page {currentPage} of {totalPages}
+        </span>
+        <button
+          onClick={handleNextPage}
+          disabled={currentPage === totalPages}
+          className="bg-border hover:bg-border/80 text-text-primary font-semibold py-1.5 px-3 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Next
+        </button>
+      </div>
+    );
+  };
+
   return (
     <Card title="Live on Base">
       <div className="overflow-x-auto">
-        <table className="w-full text-left">
+        <table className="w-full text-left min-h-[400px]">
           <thead className="border-b border-border text-text-secondary uppercase text-xs tracking-wider">
             <tr>
               <th className="p-3">Token</th>
@@ -134,6 +180,7 @@ const LatestTokens: React.FC<LatestTokensProps> = ({ tokens, isLoading, error, o
           </tbody>
         </table>
       </div>
+      {renderPagination()}
     </Card>
   );
 };
