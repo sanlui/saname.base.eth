@@ -66,29 +66,35 @@ const App: React.FC = () => {
     setProvider(null);
   };
 
-  const handleConnectWallet = () => {
-    setConnectionError(null);
-    setIsModalOpen(true);
-  };
+const handleConnectWallet = () => {
+  setConnectionError(null);
+  setIsModalOpen(true);
+};
 
-  const handleSelectWallet = async (wallet: EIP6963ProviderDetail) => {
-    setConnectionError(null);
-    setIsConnecting(true);
-    try {
-      const newProvider = new BrowserProvider(wallet.provider);
-      const signer = await newProvider.getSigner();
-      const address = await signer.getAddress();
-      
-      setAccountAddress(address);
-      setProvider(newProvider);
-      setIsModalOpen(false);
-    } catch (error) {
-      console.error("Error connecting to wallet:", error);
-      setConnectionError("Failed to connect wallet. User rejected the request or an error occurred.");
-    } finally {
-      setIsConnecting(false);
-    }
-  };
+const handleSelectWallet = async (wallet: EIP6963ProviderDetail) => {
+  if (isConnecting) return; // evita doppie chiamate
+  setConnectionError(null);
+  setIsConnecting(true);
+
+  try {
+    const newProvider = new BrowserProvider(wallet.provider);
+    const signer = await newProvider.getSigner();
+    const address = await signer.getAddress();
+
+    setAccountAddress(address);
+    setProvider(newProvider);
+
+    // Chiudi la modale con delay minimo per transizione fluida
+    setTimeout(() => setIsModalOpen(false), 200);
+  } catch (error) {
+    console.error("Error connecting to wallet:", error);
+    setConnectionError("Failed to connect wallet. User rejected the request or an error occurred.");
+  } finally {
+    // Assicurati di rimanere con isConnecting true almeno 300ms per UX stabile
+    setTimeout(() => setIsConnecting(false), 300);
+  }
+};
+
   
   const handleScrollToCreate = () => {
     creationSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
