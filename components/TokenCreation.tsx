@@ -82,7 +82,7 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
           setNewTokenDetails(createdToken);
           setIsSuccessModalOpen(true);
       } else {
-        setFeedback({ type: 'error', message: 'Token creation transaction succeeded, but the event was not found. Please check Basescan.' });
+        setFeedback({ type: 'error', message: "Your token was likely created, but we couldn't confirm it automatically. Please check your transaction on Basescan to verify its status." });
       }
       
       setTokenName('');
@@ -191,7 +191,7 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
                                 </svg>
                                 <p className="font-semibold mt-2 text-text-primary">Upload Token Icon</p>
-                                <p className="text-sm text-text-secondary mt-1">(Optional) PNG, JPG, or GIF.</p>
+                                <p className="text-sm text-text-secondary mt-1">(Optional) PNG, JPG, GIF. Max 2MB.</p>
                             </>
                         )}
                     </div>
@@ -202,7 +202,7 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label htmlFor="tokenSymbol" className={labelStyles}>Ticker *</label>
+                                <label htmlFor="tokenSymbol" className={labelStyles}>Symbol *</label>
                                 <input type="text" id="tokenSymbol" value={tokenSymbol} onChange={(e) => setTokenSymbol(e.target.value)} placeholder="e.g. GLX" className={inputStyles} required />
                             </div>
                             <div>
