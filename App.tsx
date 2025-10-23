@@ -1,16 +1,19 @@
-
-
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import TokenCreation from './components/TokenCreation';
 import LatestTokens from './components/LatestTokens';
 import Features from './components/Features';
 import Footer from './components/Footer';
-import WalletSelectionModal from './components/WalletSelectionModal';
 import { contractAddress, contractABI, erc20ABI } from './constants';
-import type { Token, EIP6963ProviderDetail, EIP6963AnnounceProviderEvent } from './types';
+import type { Token } from './types';
 import { ethers, Contract, BrowserProvider, JsonRpcProvider } from 'ethers';
+
+// Define ethereum on the window object for TypeScript
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
 
 const App: React.FC = () => {
   const [accountAddress, setAccountAddress] = useState<string | null>(null);
@@ -20,10 +23,6 @@ const App: React.FC = () => {
   const [isLoadingTokens, setIsLoadingTokens] = useState(true);
   const [tokensError, setTokensError] = useState<string | null>(null);
   const [baseFee, setBaseFee] = useState<string | null>(null);
-  
-  const [availableWallets, setAvailableWallets] = useState<EIP6963ProviderDetail[]>([]);
-  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   
   const creationSectionRef = useRef<HTMLDivElement>(null);
@@ -31,20 +30,6 @@ const App: React.FC = () => {
   useEffect(() => {
     const provider = new JsonRpcProvider('https://base.publicnode.com', 8453);
     setReadOnlyProvider(provider);
-    
-    const onAnnounceProvider = (event: EIP6963AnnounceProviderEvent) => {
-      setAvailableWallets(prev => {
-        if (prev.some(p => p.info.uuid === event.detail.info.uuid)) return prev;
-        return [...prev, event.detail];
-      });
-    };
-    
-    window.addEventListener('eip6963:announceProvider', onAnnounceProvider);
-    window.dispatchEvent(new Event('eip6963:requestProvider'));
-
-    return () => {
-      window.removeEventListener('eip6963:announceProvider', onAnnounceProvider);
-    };
   }, []);
 
   const handleDisconnect = () => {
@@ -52,35 +37,28 @@ const App: React.FC = () => {
     setProvider(null);
   };
 
-  const handleConnectWallet = () => {
-    setIsWalletModalOpen(true);
+  const handleConnectWallet = async () => {
+    setConnectionError(null);
+    if (typeof window.ethereum !== "undefined") {
+        try {
+            const newProvider = new BrowserProvider(window.ethereum);
+            await newProvider.send("eth_requestAccounts", []);
+            const signer = await newProvider.getSigner();
+            const address = await signer.getAddress();
+            setAccountAddress(address);
+            setProvider(newProvider);
+        } catch (error) {
+            console.error("Error connecting to wallet:", error);
+            setConnectionError("Failed to connect wallet. User rejected the request or an error occurred.");
+        }
+    } else {
+        console.log("No wallet provider found.");
+        setConnectionError("No wallet detected. Please install a browser extension like MetaMask or Coinbase Wallet.");
+    }
   };
   
   const handleScrollToCreate = () => {
     creationSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const handleSelectWallet = async (wallet: EIP6963ProviderDetail) => {
-    setIsConnecting(true);
-    setConnectionError(null);
-    try {
-      const newProvider = new BrowserProvider(wallet.provider);
-      const signer = await newProvider.getSigner();
-      const address = await signer.getAddress();
-      setAccountAddress(address);
-      setProvider(newProvider);
-      setIsWalletModalOpen(false);
-    } catch (error) {
-      console.error("Error connecting to wallet:", error);
-      setConnectionError("Failed to connect wallet. Please try again or choose a different wallet.");
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
-  const handleCloseWalletModal = () => {
-    setIsWalletModalOpen(false);
-    setConnectionError(null);
   };
 
   const fetchTokensFromAllTokensArray = useCallback(async () => {
@@ -161,21 +139,20 @@ const App: React.FC = () => {
       if (accounts.length > 0) {
         setAccountAddress(accounts[0]);
       } else {
-        setAccountAddress(null);
-        setProvider(null);
+        handleDisconnect();
       }
     };
 
-    if (provider?.provider.on) {
-        provider.provider.on('accountsChanged', handleAccountsChanged);
+    if (window.ethereum && window.ethereum.on) {
+        window.ethereum.on('accountsChanged', handleAccountsChanged);
     }
 
     return () => {
-      if (provider?.provider.removeListener) {
-        provider.provider.removeListener('accountsChanged', handleAccountsChanged);
+      if (window.ethereum && window.ethereum.removeListener) {
+        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
       }
     };
-  }, [provider]);
+  }, []);
   
   const onTokenCreated = useCallback(() => {
     setTimeout(fetchTokensFromAllTokensArray, 1000);
@@ -201,6 +178,13 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-background font-sans flex flex-col">
       <Header onConnectWallet={handleConnectWallet} accountAddress={accountAddress} onDisconnect={handleDisconnect} />
       <main className="container mx-auto px-4 py-12 md:py-16 flex-grow">
+        {connectionError && (
+          <div className="text-center p-3 rounded-lg text-sm break-words my-4 bg-error/20 text-red-300 animate-fade-in flex justify-between items-center max-w-3xl mx-auto">
+              <span>{connectionError}</span>
+              <button onClick={() => setConnectionError(null)} className="ml-4 font-bold p-1 rounded-full hover:bg-white/10" aria-label="Close error message">&times;</button>
+          </div>
+        )}
+
         {/* Hero Section */}
         <section className="text-center">
           <h1 className="text-4xl md:text-5xl font-bold font-display mb-2 animate-fade-in">
@@ -251,14 +235,6 @@ const App: React.FC = () => {
 
       </main>
       <Footer />
-      <WalletSelectionModal
-        isOpen={isWalletModalOpen}
-        onClose={handleCloseWalletModal}
-        wallets={availableWallets}
-        onSelectWallet={handleSelectWallet}
-        isConnecting={isConnecting}
-        error={connectionError}
-      />
     </div>
   );
 };
