@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import TokenCreation from './components/TokenCreation';
@@ -35,6 +34,7 @@ const App: React.FC = () => {
 
   const creationSectionRef = useRef<HTMLDivElement>(null);
 
+  // Read-only provider
   useEffect(() => {
     const provider = new JsonRpcProvider('https://base.publicnode.com', 8453);
     setReadOnlyProvider(provider);
@@ -45,9 +45,7 @@ const App: React.FC = () => {
     const handleAnnounceProvider = (event: any) => {
       const providerDetail: EIP6963ProviderDetail = event.detail;
       setWallets(currentWallets => {
-        if (currentWallets.some(w => w.info.uuid === providerDetail.info.uuid)) {
-          return currentWallets;
-        }
+        if (currentWallets.some(w => w.info.uuid === providerDetail.info.uuid)) return currentWallets;
         return [...currentWallets, providerDetail];
       });
     };
@@ -55,164 +53,120 @@ const App: React.FC = () => {
     window.addEventListener('eip6963:announceProvider', handleAnnounceProvider);
     announceProvider();
 
-    return () => {
-      window.removeEventListener('eip6963:announceProvider', handleAnnounceProvider);
-    };
+    return () => window.removeEventListener('eip6963:announceProvider', handleAnnounceProvider);
   }, []);
-
 
   const handleDisconnect = () => {
     setAccountAddress(null);
     setProvider(null);
   };
 
-const handleSelectWallet = async (wallet: EIP6963ProviderDetail) => {
-  if (isConnecting) return; // evita doppie chiamate
-  setConnectionError(null);
-  setIsConnecting(true);
+  // --- Connect and Sign ---
+  const handleSelectWallet = async (wallet: EIP6963ProviderDetail) => {
+    if (isConnecting) return;
+    setConnectionError(null);
+    setIsConnecting(true);
 
-  try {
-    const newProvider = new BrowserProvider(wallet.provider);
-    const signer = await newProvider.getSigner();
-    const address = await signer.getAddress();
+    try {
+      const newProvider = new BrowserProvider(wallet.provider);
+      const signer = await newProvider.getSigner();
+      const address = await signer.getAddress();
 
-    // --- RICHIESTA DI FIRMA ---
-    const message = "Sign this message to connect to Disrole.";
-    const signature = await signer.signMessage(message);
-    console.log("User signed:", signature);
-    // Puoi eventualmente inviare signature al backend per verifica
+      // Richiesta di firma
+      const message = "Sign this message to connect to Disrole.";
+      const signature = await signer.signMessage(message);
+      console.log("User signed:", signature);
 
-    setAccountAddress(address);
-    setProvider(newProvider);
+      setAccountAddress(address);
+      setProvider(newProvider);
 
-    // Chiudi la modale con delay minimo per transizione fluida
-    setTimeout(() => setIsModalOpen(false), 200);
-  } catch (error) {
-    console.error("Error connecting wallet or signing:", error);
-    setConnectionError("Failed to connect wallet or sign the message.");
-  } finally {
-    // Assicurati di rimanere con isConnecting true almeno 300ms per UX stabile
-    setTimeout(() => setIsConnecting(false), 300);
-  }
-};
+      // Chiudi la modale
+      setTimeout(() => setIsModalOpen(false), 200);
+    } catch (error) {
+      console.error("Error connecting wallet or signing:", error);
+      setConnectionError("Failed to connect wallet or sign the message.");
+    } finally {
+      setTimeout(() => setIsConnecting(false), 300);
+    }
+  };
 
+  const handleConnectWallet = () => {
+    setConnectionError(null);
+    setIsModalOpen(true);
+  };
 
-  
   const handleScrollToCreate = () => {
     creationSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const fetchTokensFromAllTokensArray = useCallback(async () => {
     if (!readOnlyProvider) return;
-    
+
     setIsLoadingTokens(true);
     setTokensError(null);
+
     try {
-        const contract = new Contract(contractAddress, contractABI, readOnlyProvider);
+      const contract = new Contract(contractAddress, contractABI, readOnlyProvider);
 
-        if (!baseFee) {
-            const fee = await contract.baseFee();
-            setBaseFee(ethers.formatEther(fee));
-        }
+      if (!baseFee) {
+        const fee = await contract.baseFee();
+        setBaseFee(ethers.formatEther(fee));
+      }
 
-        const totalTokensBigInt = await contract.totalTokensCreated();
-        const totalTokens = Number(totalTokensBigInt);
-        
-        const BATCH_SIZE = 50;
-        const fetchedTokens: Token[] = [];
+      const totalTokens = Number(await contract.totalTokensCreated());
+      const BATCH_SIZE = 50;
+      const fetchedTokens: Token[] = [];
 
-        for (let i = 0; i < totalTokens; i += BATCH_SIZE) {
-            const batchPromises: Promise<string>[] = [];
-            const end = Math.min(i + BATCH_SIZE, totalTokens);
-            for (let j = i; j < end; j++) {
-                batchPromises.push(contract.allTokens(j));
-            }
-            
-            const tokenAddresses = await Promise.all(batchPromises);
-            
-            const detailPromises = tokenAddresses.map(async (address: string): Promise<Token | null> => {
-                 try {
-                    const tokenContract = new Contract(address, erc20ABI, readOnlyProvider);
-                    const [name, symbol, supply] = await Promise.all([
-                        tokenContract.name(),
-                        tokenContract.symbol(),
-                        tokenContract.totalSupply(),
-                    ]);
-                    
-                    return {
-                        address,
-                        name,
-                        symbol,
-                        supply: supply.toString(),
-                        creator: 'N/A',
-                        timestamp: undefined,
-                    };
-                } catch (error) {
-                    console.error(`Error fetching details for token ${address}:`, error);
-                    return null;
-                }
-            });
+      for (let i = 0; i < totalTokens; i += BATCH_SIZE) {
+        const batchPromises: Promise<string>[] = [];
+        const end = Math.min(i + BATCH_SIZE, totalTokens);
+        for (let j = i; j < end; j++) batchPromises.push(contract.allTokens(j));
 
-            const resolvedTokens = await Promise.all(detailPromises);
-            const validTokensInBatch = resolvedTokens.filter((t): t is Token => t !== null);
-            fetchedTokens.push(...validTokensInBatch);
-        }
+        const tokenAddresses = await Promise.all(batchPromises);
 
-        const sortedTokens = fetchedTokens.reverse();
-        setTokens(sortedTokens);
+        const detailPromises = tokenAddresses.map(async (address: string): Promise<Token | null> => {
+          try {
+            const tokenContract = new Contract(address, erc20ABI, readOnlyProvider);
+            const [name, symbol, supply] = await Promise.all([
+              tokenContract.name(),
+              tokenContract.symbol(),
+              tokenContract.totalSupply(),
+            ]);
+            return { address, name, symbol, supply: supply.toString(), creator: 'N/A', timestamp: undefined };
+          } catch {
+            return null;
+          }
+        });
 
+        const resolvedTokens = await Promise.all(detailPromises);
+        fetchedTokens.push(...resolvedTokens.filter((t): t is Token => t !== null));
+      }
+
+      setTokens(fetchedTokens.reverse());
     } catch (error: any) {
-        console.error("Error fetching tokens from allTokens array:", error);
-        setTokensError(error.message || 'An unexpected error occurred. Please try again.');
+      console.error("Error fetching tokens:", error);
+      setTokensError(error.message || "Unexpected error");
     } finally {
-        setIsLoadingTokens(false);
+      setIsLoadingTokens(false);
     }
-}, [readOnlyProvider, baseFee]);
-  
-  useEffect(() => {
-    if(readOnlyProvider) {
-      fetchTokensFromAllTokensArray();
-    }
-  }, [readOnlyProvider, fetchTokensFromAllTokensArray]);
+  }, [readOnlyProvider, baseFee]);
+
+  useEffect(() => { if (readOnlyProvider) fetchTokensFromAllTokensArray(); }, [readOnlyProvider, fetchTokensFromAllTokensArray]);
 
   useEffect(() => {
-    const handleAccountsChanged = (accounts: string[]) => {
-      if (accounts.length > 0) {
-        setAccountAddress(accounts[0]);
-      } else {
-        handleDisconnect();
-      }
-    };
-
-    if (provider && provider.provider && provider.provider.on) {
-        provider.provider.on('accountsChanged', handleAccountsChanged);
-    }
-
-    return () => {
-      if (provider && provider.provider && provider.provider.removeListener) {
-        provider.provider.removeListener('accountsChanged', handleAccountsChanged);
-      }
-    };
+    const handleAccountsChanged = (accounts: string[]) => accounts.length > 0 ? setAccountAddress(accounts[0]) : handleDisconnect();
+    if (provider?.provider?.on) provider.provider.on('accountsChanged', handleAccountsChanged);
+    return () => { if (provider?.provider?.removeListener) provider.provider.removeListener('accountsChanged', handleAccountsChanged); };
   }, [provider]);
-  
-  const onTokenCreated = useCallback(() => {
-    setTimeout(fetchTokensFromAllTokensArray, 1000);
-  }, [fetchTokensFromAllTokensArray]);
+
+  const onTokenCreated = useCallback(() => setTimeout(fetchTokensFromAllTokensArray, 1000), [fetchTokensFromAllTokensArray]);
 
   useEffect(() => {
     if (!readOnlyProvider) return;
-    
     const contract = new Contract(contractAddress, contractABI, readOnlyProvider);
-    
-    const handleNewToken = () => {
-      onTokenCreated();
-    };
-
+    const handleNewToken = () => onTokenCreated();
     contract.on('TokenCreated', handleNewToken);
-    
-    return () => {
-      contract.removeAllListeners('TokenCreated');
-    };
+    return () => contract.removeAllListeners('TokenCreated');
   }, [readOnlyProvider, onTokenCreated]);
 
   return (
@@ -221,8 +175,8 @@ const handleSelectWallet = async (wallet: EIP6963ProviderDetail) => {
       <main className="container mx-auto px-4 py-12 md:py-16 flex-grow">
         {connectionError && !isModalOpen && (
           <div className="text-center p-3 rounded-lg text-sm break-words my-4 bg-error/20 text-red-300 animate-fade-in flex justify-between items-center max-w-3xl mx-auto">
-              <span>{connectionError}</span>
-              <button onClick={() => setConnectionError(null)} className="ml-4 font-bold p-1 rounded-full hover:bg-white/10" aria-label="Close error message">&times;</button>
+            <span>{connectionError}</span>
+            <button onClick={() => setConnectionError(null)} className="ml-4 font-bold p-1 rounded-full hover:bg-white/10" aria-label="Close error message">&times;</button>
           </div>
         )}
 
@@ -236,14 +190,11 @@ const handleSelectWallet = async (wallet: EIP6963ProviderDetail) => {
           <p className="text-2xl md:text-3xl font-bold font-display mb-4 text-text-primary animate-fade-in" style={{ animationDelay: '0.1s' }}>
             Fast. Simple. All Yours.
           </p>
-          <p className="text-lg md:text-xl text-text-secondary max-w-3xl mx-auto mb-10 animate-fade-in" style={{animationDelay: '0.2s'}}>
+          <p className="text-lg md:text-xl text-text-secondary max-w-3xl mx-auto mb-10 animate-fade-in" style={{ animationDelay: '0.2s' }}>
             Create and deploy your custom ERC20 token in minutes. With our no-code creator, you have full ownership and control on the low-cost, high-speed Base network.
           </p>
-          <div className="animate-fade-in" style={{animationDelay: '0.3s'}}>
-            <button
-                onClick={handleScrollToCreate}
-                className="bg-primary hover:bg-primary-hover text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 shadow-glow"
-            >
+          <div className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <button onClick={handleScrollToCreate} className="bg-primary hover:bg-primary-hover text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 shadow-glow">
               Start Creating
             </button>
           </div>
@@ -256,24 +207,13 @@ const handleSelectWallet = async (wallet: EIP6963ProviderDetail) => {
         <section ref={creationSectionRef} className="pt-16 md:pt-24">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
             <div className="lg:col-span-3">
-              <TokenCreation 
-                accountAddress={accountAddress} 
-                provider={provider} 
-                baseFee={baseFee}
-                onTokenCreated={onTokenCreated}
-              />
+              <TokenCreation accountAddress={accountAddress} provider={provider} baseFee={baseFee} onTokenCreated={onTokenCreated} />
             </div>
             <div className="lg:col-span-2">
-              <LatestTokens 
-                tokens={tokens} 
-                isLoading={isLoadingTokens} 
-                error={tokensError}
-                onRetry={fetchTokensFromAllTokensArray}
-              />
+              <LatestTokens tokens={tokens} isLoading={isLoadingTokens} error={tokensError} onRetry={fetchTokensFromAllTokensArray} />
             </div>
           </div>
         </section>
-
       </main>
       <Footer />
       <WalletSelectionModal
