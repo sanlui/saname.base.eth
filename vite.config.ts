@@ -1,11 +1,10 @@
-// FIX: Removed reference to "node" types which was causing an error.
-// Instead, we import `process` directly to get the necessary types.
+// FIX: Add reference to node types to resolve errors with `process` and `NodeJS` namespace.
+/// <reference types="node" />
 
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 import { cp, access } from 'fs/promises';
-import process from 'node:process';
 
 export default defineConfig({
   plugins: [
@@ -27,8 +26,7 @@ export default defineConfig({
         } catch (error) {
           // If the source directory doesn't exist, we can silently ignore.
           // For any other errors, log them to the console.
-          // FIX: Replaced `NodeJS.ErrnoException` with a generic type to avoid relying on global NodeJS types.
-          if ((error as { code: string }).code !== 'ENOENT') {
+          if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
             console.error('An error occurred while copying the .well-known directory:', error);
           }
         }
