@@ -1,12 +1,7 @@
 {
-  "accountAssociation": {
-    "header": "eyJmaWQiOjk5NDM4MiwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDk1Mjk3ZDQ3NzQwQzUyOENlNDllNjJiRjAyNEVBMTc0OTc5QTY1NWMifQ",
-    "payload": "eyJkb21haW4iOiJkaXNyb2xlLmNvbSJ9",
-    "signature": "9Eb58l0VTsIaS3hmQRJGGXHlCBxnDM484qzdttmtDqNHF15fzoLw9zbklGh9PYfrQpq9LxMSWZMtJR1jmtOGDhw="
-  },
   "name": "Disrole",
   "iconUrl": "https://www.disrole.com/logo.png",
-  "subtitle": "Social platform innovativa", 
+  "subtitle": "Social platform innovativa",
   "description": "Connettiti con amici e community in modo unico",
   "primaryCategory": "social",
   "imageUrl": "https://www.disrole.com/logo.png",
