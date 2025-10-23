@@ -1,12 +1,12 @@
 {
   "name": "Disrole",
-  "iconUrl": "https://www.disrole.com/logo.png",
-  "subtitle": "Social platform innovativa",
-  "description": "Connettiti con amici e community in modo unico",
-  "primaryCategory": "social",
-  "imageUrl": "https://www.disrole.com/logo.png",
-  "splashImageUrl": "https://www.disrole.com/logo.png",
+  "iconUrl": "https://www.disrole.com/social-preview.svg",
+  "subtitle": "Create ERC20 tokens on the Base network instantly.",
+  "description": "A no-code tool to create and deploy ERC20 tokens on the Base network. Fast, simple, and secure.",
+  "primaryCategory": "protocol",
+  "imageUrl": "https://www.disrole.com/social-preview.svg",
+  "splashImageUrl": "https://www.disrole.com/social-preview.svg",
   "splashBackgroundColor": "#000000",
-  "buttonTitle": "Apri Disrole",
+  "buttonTitle": "Create a Token",
   "homeUrl": "https://www.disrole.com"
 }

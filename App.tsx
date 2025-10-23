@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import TokenCreation from './components/TokenCreation';
@@ -6,7 +7,7 @@ import LatestTokens from './components/LatestTokens';
 import Features from './components/Features';
 import Footer from './components/Footer';
 import WalletSelectionModal from './components/WalletSelectionModal';
-import { contractAddress, contractABI, erc20ABI } from './constants';
+import { contractAddress, contractABI } from './constants';
 import type { Token, EIP6963ProviderDetail } from './types';
 import { ethers, Contract, BrowserProvider, JsonRpcProvider } from 'ethers';
 
@@ -119,73 +120,65 @@ const App: React.FC = () => {
     creationSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const fetchTokensFromAllTokensArray = useCallback(async () => {
+  const fetchTokens = useCallback(async () => {
     if (!readOnlyProvider) return;
     
     setIsLoadingTokens(true);
     setTokensError(null);
     try {
-        const contract = new Contract(contractAddress, contractABI, readOnlyProvider);
+        // FIX: Add `as const` to the contractABI to ensure proper type inference by ethers.
+        // This resolves an issue where event data was being incorrectly typed as `unknown`,
+        // leading to a "Type 'unknown' cannot be used as an index type" error.
+        const contract = new Contract(contractAddress, contractABI as const, readOnlyProvider);
 
         if (!baseFee) {
             const fee = await contract.baseFee();
             setBaseFee(ethers.formatEther(fee));
         }
-
-        const totalTokensBigInt = await contract.totalTokensCreated();
-        const totalTokens = Number(totalTokensBigInt);
         
-        const BATCH_SIZE = 50;
-        const fetchedTokens: Token[] = [];
-
-        for (let i = 0; i < totalTokens; i += BATCH_SIZE) {
-            const batchPromises: Promise<string>[] = [];
-            const end = Math.min(i + BATCH_SIZE, totalTokens);
-            for (let j = i; j < end; j++) {
-                batchPromises.push(contract.allTokens(j));
-            }
-            
-            const tokenAddresses = await Promise.all(batchPromises);
-            
-            const detailPromises = tokenAddresses.map(async (address: string): Promise<Token | null> => {
-                 try {
-                    const tokenContract = new Contract(address, erc20ABI, readOnlyProvider);
-                    const [name, symbol, supply] = await Promise.all([
-                        tokenContract.name(),
-                        tokenContract.symbol(),
-                        tokenContract.totalSupply(),
-                    ]);
-                    
-                    return {
-                        address,
-                        name,
-                        symbol,
-                        supply: supply.toString(),
-                        creator: 'N/A',
-                        timestamp: undefined,
-                    };
-                } catch (error) {
-                    console.error(`Error fetching details for token ${address}:`, error);
-                    return null;
+        // Query for all TokenCreated events
+        const events = await contract.queryFilter('TokenCreated');
+        
+        // Efficiently fetch block timestamps
+        const blockTimestamps: Record<number, number> = {};
+        const uniqueBlockNumbers = [...new Set(events.map(event => event.blockNumber))];
+        
+        await Promise.all(uniqueBlockNumbers.map(async (blockNumber) => {
+            try {
+                const block = await readOnlyProvider.getBlock(blockNumber);
+                if (block) {
+                    blockTimestamps[blockNumber] = block.timestamp * 1000; // Convert to milliseconds
                 }
-            });
+            } catch (error) {
+                console.error(`Error fetching block ${blockNumber}:`, error);
+            }
+        }));
 
-            const resolvedTokens = await Promise.all(detailPromises);
-            const validTokensInBatch = resolvedTokens.filter((t): t is Token => t !== null);
-            fetchedTokens.push(...validTokensInBatch);
-        }
+        const fetchedTokens: Token[] = events.map(event => {
+            const args = event.args;
+            const token: Token = {
+                address: args.tokenAddress,
+                name: args.name,
+                symbol: args.symbol,
+                supply: args.supply.toString(),
+                creator: args.creator,
+                timestamp: blockTimestamps[event.blockNumber] || undefined,
+                txHash: event.transactionHash
+            };
+            return token;
+        });
         
         const tokensWithMetadata = fetchedTokens.map(token => ({
             ...token,
             ...(localMetadata[token.address.toLowerCase()] || {})
         }));
 
-        const sortedTokens = tokensWithMetadata.reverse();
+        const sortedTokens = tokensWithMetadata.reverse(); // Newest first
         setTokens(sortedTokens);
 
     } catch (error: any) {
-        console.error("Error fetching tokens from allTokens array:", error);
-        setTokensError(error.message || 'An unexpected error occurred. Please try again.');
+        console.error("Error fetching tokens from events:", error);
+        setTokensError(error.message || 'An unexpected error occurred while fetching tokens. Please try again.');
     } finally {
         setIsLoadingTokens(false);
     }
@@ -193,9 +186,9 @@ const App: React.FC = () => {
   
   useEffect(() => {
     if(readOnlyProvider) {
-      fetchTokensFromAllTokensArray();
+      fetchTokens();
     }
-  }, [readOnlyProvider, fetchTokensFromAllTokensArray]);
+  }, [readOnlyProvider, fetchTokens]);
 
   useEffect(() => {
     const handleAccountsChanged = (accounts: string[]) => {
@@ -218,8 +211,8 @@ const App: React.FC = () => {
   }, [provider]);
   
   const onTokenCreated = useCallback(() => {
-    setTimeout(fetchTokensFromAllTokensArray, 1000);
-  }, [fetchTokensFromAllTokensArray]);
+    setTimeout(fetchTokens, 1000);
+  }, [fetchTokens]);
 
   const addLocalTokenMetadata = useCallback((token: Token) => {
     if (!token.address) return;
@@ -304,7 +297,7 @@ const App: React.FC = () => {
                 tokens={tokens} 
                 isLoading={isLoadingTokens} 
                 error={tokensError}
-                onRetry={fetchTokensFromAllTokensArray}
+                onRetry={fetchTokens}
               />
             </div>
           </div>

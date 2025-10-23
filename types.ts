@@ -13,7 +13,6 @@ export interface Token {
   description?: string;
 }
 
-// FIX: Add missing EIP-6963 type definitions used in WalletSelectionModal.tsx
 export interface EIP6963ProviderInfo {
   uuid: string;
   name: string;

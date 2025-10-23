@@ -2,7 +2,6 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 import { cp, access } from 'fs/promises';
-// FIX: Import `process` explicitly to provide types and resolve errors.
 import { process } from 'node:process';
 
 export default defineConfig({
@@ -25,7 +24,6 @@ export default defineConfig({
         } catch (error) {
           // If the source directory doesn't exist, we can silently ignore.
           // For any other errors, log them to the console.
-          // FIX: Use a structural type for the error object to avoid depending on the NodeJS namespace.
           if ((error as { code?: string }).code !== 'ENOENT') {
             console.error('An error occurred while copying the .well-known directory:', error);
           }
