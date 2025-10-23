@@ -11,9 +11,10 @@ interface TokenCreationProps {
   provider: BrowserProvider | null;
   baseFee: string | null;
   onTokenCreated: () => void;
+  onTokenCreatedWithMetadata: (token: Token) => void;
 }
 
-const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider, baseFee, onTokenCreated }) => {
+const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider, baseFee, onTokenCreated, onTokenCreatedWithMetadata }) => {
   const [tokenName, setTokenName] = useState('');
   const [tokenSymbol, setTokenSymbol] = useState('');
   const [tokenSupply, setTokenSupply] = useState('');
@@ -82,8 +83,6 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
       }
       
       if (parsedEvent && parsedEvent.args) {
-          onTokenCreated();
-
           const createdToken: Token = {
               name: parsedEvent.args.name,
               symbol: parsedEvent.args.symbol,
@@ -97,6 +96,9 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
               telegram: telegram || undefined,
               description: description || undefined,
           };
+          onTokenCreatedWithMetadata(createdToken);
+          onTokenCreated();
+
           setNewTokenDetails(createdToken);
           setIsSuccessModalOpen(true);
       } else {

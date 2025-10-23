@@ -37,6 +37,7 @@ const App: React.FC = () => {
   const [wallets, setWallets] = useState<EIP6963ProviderDetail[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [localMetadata, setLocalMetadata] = useState<Record<string, Partial<Token>>>({});
 
   const creationSectionRef = useRef<HTMLDivElement>(null);
 
@@ -173,8 +174,13 @@ const App: React.FC = () => {
             const validTokensInBatch = resolvedTokens.filter((t): t is Token => t !== null);
             fetchedTokens.push(...validTokensInBatch);
         }
+        
+        const tokensWithMetadata = fetchedTokens.map(token => ({
+            ...token,
+            ...(localMetadata[token.address.toLowerCase()] || {})
+        }));
 
-        const sortedTokens = fetchedTokens.reverse();
+        const sortedTokens = tokensWithMetadata.reverse();
         setTokens(sortedTokens);
 
     } catch (error: any) {
@@ -183,7 +189,7 @@ const App: React.FC = () => {
     } finally {
         setIsLoadingTokens(false);
     }
-}, [readOnlyProvider, baseFee]);
+}, [readOnlyProvider, baseFee, localMetadata]);
   
   useEffect(() => {
     if(readOnlyProvider) {
@@ -214,6 +220,19 @@ const App: React.FC = () => {
   const onTokenCreated = useCallback(() => {
     setTimeout(fetchTokensFromAllTokensArray, 1000);
   }, [fetchTokensFromAllTokensArray]);
+
+  const addLocalTokenMetadata = useCallback((token: Token) => {
+    if (!token.address) return;
+    setLocalMetadata(prev => ({
+        ...prev,
+        [token.address.toLowerCase()]: {
+            website: token.website,
+            twitter: token.twitter,
+            telegram: token.telegram,
+            description: token.description,
+        }
+    }));
+  }, []);
 
   useEffect(() => {
     if (!readOnlyProvider) return;
@@ -277,6 +296,7 @@ const App: React.FC = () => {
                 provider={provider} 
                 baseFee={baseFee}
                 onTokenCreated={onTokenCreated}
+                onTokenCreatedWithMetadata={addLocalTokenMetadata}
               />
             </div>
             <div className="lg:col-span-2">
