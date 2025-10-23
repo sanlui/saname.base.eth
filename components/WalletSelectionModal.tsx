@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import type { EIP6963ProviderDetail } from '../types';
 
@@ -75,6 +76,12 @@ const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({
                 {error}
             </div>
         )}
+
+        <div className="mt-6 pt-4 border-t border-border">
+          <p className="text-xs text-text-secondary text-center">
+            By connecting, you allow this site to view your public wallet address. To verify ownership, you will be asked to sign a message. This is a secure, gas-free action that does not grant any permissions to perform transactions.
+          </p>
+        </div>
       </div>
     </div>
   );

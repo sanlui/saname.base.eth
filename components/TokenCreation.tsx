@@ -285,23 +285,37 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
                     </div>
                 </div>
 
-                <div className="border-t border-border pt-6">
-                    <div className="text-center mb-4 min-h-[120px]">
-                        <p className="text-sm text-text-primary">
-                          Deployment Fee: <span className="font-mono text-green-400 font-bold">{baseFee ? `${baseFee} ETH` : 'Loading...'}</span>
+                <div className="border-t border-border pt-6 space-y-6">
+                    <div className="text-left text-sm p-4 bg-background rounded-lg border border-border">
+                        <h4 className="font-bold text-text-primary mb-2 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                <title>Security information icon</title>
+                                <path fillRule="evenodd" d="M8.257 3.099c.636-1.21 2.37-1.21 3.006 0l4.312 8.223c.636 1.21-.26 2.678-1.503 2.678H5.448c-1.243 0-2.139-1.468-1.503-2.678L8.257 3.099zM10 6a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 6zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                            </svg>
+                            Transaction Security Information
+                        </h4>
+                        <p className="text-text-secondary text-xs mb-3">
+                            For your security and transparency, here is a breakdown of the transaction you will be asked to approve in your wallet:
                         </p>
-                        <p className="text-xs text-text-secondary mt-1">One-time fee to launch on Base. No hidden costs.</p>
-                        
-                        <p className="text-xs text-text-secondary mt-4">
-                          By proceeding, you acknowledge you are deploying a smart contract and assume all responsibility for the token created.
+                        <ul className="list-disc list-inside space-y-2 text-text-secondary text-xs pl-2">
+                            <li>Your wallet will ask for confirmation to interact with our audited and verified factory contract.</li>
+                            <li>You will execute the <code className="bg-border text-primary font-mono text-xs px-1 py-0.5 rounded">createToken</code> function to deploy your smart contract.</li>
+                            <li>The transaction value will be a one-time deployment fee of <span className="font-mono text-green-400 font-bold">{baseFee ? `${baseFee} ETH` : '...'}</span> plus a standard Base network gas fee.</li>
+                            <li>Upon confirmation, a unique ERC20 token contract is created, and the total supply is minted directly to your wallet. You are the sole owner.</li>
+                        </ul>
+                    </div>
+
+                    <div className="text-center space-y-4">
+                        <p className="text-xs text-text-secondary px-4">
+                            By proceeding, you acknowledge that you are deploying a smart contract to the blockchain and assume all responsibility for the token you create.
                         </p>
                         
                         {!accountAddress && (
-                             <p className="text-yellow-400 font-semibold mt-4">Please connect your wallet to create a token.</p>
+                            <p className="text-yellow-400 font-semibold">Please connect your wallet to create a token.</p>
                         )}
                         
                         {feedback && (
-                            <div className={`text-center p-3 rounded-lg text-sm break-words mt-4 ${
+                            <div className={`text-center p-3 rounded-lg text-sm break-words ${
                             feedback.type === 'success' ? 'bg-success/20 text-green-300' : 
                             feedback.type === 'error' ? 'bg-error/20 text-red-300' :
                             'bg-info/20 text-blue-300'
