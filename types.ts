@@ -7,6 +7,10 @@ export interface Token {
   timestamp?: number;
   txHash?: string;
   decimals?: number;
+  website?: string;
+  twitter?: string;
+  telegram?: string;
+  description?: string;
 }
 
 // FIX: Add missing EIP-6963 type definitions used in WalletSelectionModal.tsx

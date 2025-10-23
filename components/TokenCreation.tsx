@@ -17,6 +17,10 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
   const [tokenName, setTokenName] = useState('');
   const [tokenSymbol, setTokenSymbol] = useState('');
   const [tokenSupply, setTokenSupply] = useState('');
+  const [description, setDescription] = useState('');
+  const [website, setWebsite] = useState('');
+  const [twitter, setTwitter] = useState('');
+  const [telegram, setTelegram] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
@@ -88,6 +92,10 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
               creator: parsedEvent.args.creator,
               txHash: receipt.hash,
               decimals: decimals,
+              website: website || undefined,
+              twitter: twitter || undefined,
+              telegram: telegram || undefined,
+              description: description || undefined,
           };
           setNewTokenDetails(createdToken);
           setIsSuccessModalOpen(true);
@@ -98,6 +106,10 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
       setTokenName('');
       setTokenSymbol('');
       setTokenSupply('');
+      setDescription('');
+      setWebsite('');
+      setTwitter('');
+      setTelegram('');
       setFeedback(null);
 
     } catch (error: any) {
@@ -241,6 +253,31 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
                             <div>
                                 <label htmlFor="blockchainNetwork" className={labelStyles}>Blockchain Network</label>
                                 <div className={inputStyles + ' bg-background cursor-not-allowed'}>Base Mainnet</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 className="text-lg font-bold text-text-primary font-display mb-1">Optional Metadata</h3>
+                    <p className="text-text-secondary text-sm mb-4">This information is for display purposes only and is not stored on-chain.</p>
+                    <div className="space-y-4">
+                        <div>
+                            <label htmlFor="description" className={labelStyles}>Description (Max 200 chars)</label>
+                            <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="A brief description of your token's utility." className={inputStyles} rows={3} maxLength={200}></textarea>
+                        </div>
+                        <div>
+                            <label htmlFor="website" className={labelStyles}>Website URL</label>
+                            <input type="url" id="website" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://yourproject.com" className={inputStyles} />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label htmlFor="twitter" className={labelStyles}>Twitter (X) URL</label>
+                                <input type="url" id="twitter" value={twitter} onChange={(e) => setTwitter(e.target.value)} placeholder="https://x.com/yourhandle" className={inputStyles} />
+                            </div>
+                            <div>
+                                <label htmlFor="telegram" className={labelStyles}>Telegram URL</label>
+                                <input type="url" id="telegram" value={telegram} onChange={(e) => setTelegram(e.target.value)} placeholder="https://t.me/yourgroup" className={inputStyles} />
                             </div>
                         </div>
                     </div>
