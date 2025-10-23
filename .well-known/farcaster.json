@@ -4,6 +4,14 @@
     "payload": "eyJkb21haW4iOiJkaXNyb2xlLmNvbSJ9",
     "signature": "9Eb58l0VTsIaS3hmQRJGGXHlCBxnDM484qzdttmtDqNHF15fzoLw9zbklGh9PYfrQpq9LxMSWZMtJR1jmtOGDhw="
   },
+  "frame": {
+    "version": "1",
+    "name": "Disrole",
+    "iconUrl": "https://www.disrole.com/logo.png",
+    "homeUrl": "https://www.disrole.com",
+    "imageUrl": "https://www.disrole.com/logo.png",
+    "buttonTitle": "Apri Disrole"
+  },
   "name": "Disrole",
   "iconUrl": "https://www.disrole.com/logo.png",
   "subtitle": "Social platform innovativa", 
