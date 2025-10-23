@@ -78,9 +78,15 @@ const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({
         )}
 
         <div className="mt-6 pt-4 border-t border-border">
-          <p className="text-xs text-text-secondary text-center">
-            By connecting, you allow this site to view your public wallet address. To verify ownership, you will be asked to sign a message. This is a secure, gas-free action that does not grant any permissions to perform transactions.
-          </p>
+          <div className="text-left text-xs p-3 bg-background rounded-lg border border-info/20 flex items-start gap-3">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-info flex-shrink-0 mt-px" viewBox="0 0 20 20" fill="currentColor">
+                  <title>Information icon</title>
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+              <p className="text-text-secondary">
+                  <strong>Permission Clarification:</strong> You will be asked to connect your wallet to view your public address, and to sign a gas-free message to verify you are the owner. This is a secure, read-only action and does not grant any permission to access your funds or perform transactions.
+              </p>
+          </div>
         </div>
       </div>
     </div>

@@ -298,7 +298,18 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
                             For your security and transparency, here is a breakdown of the transaction you will be asked to approve in your wallet:
                         </p>
                         <ul className="list-disc list-inside space-y-2 text-text-secondary text-xs pl-2">
-                            <li>Your wallet will ask for confirmation to interact with our audited and verified factory contract.</li>
+                            <li>
+                                Interact with our audited and verified factory contract:
+                                <a 
+                                    href={`https://basescan.org/address/${contractAddress}`} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="text-primary hover:underline font-mono ml-1"
+                                    aria-label="View contract on Basescan"
+                                >
+                                    {`${contractAddress.substring(0, 6)}...${contractAddress.substring(contractAddress.length - 4)}`}
+                                </a>.
+                            </li>
                             <li>You will execute the <code className="bg-border text-primary font-mono text-xs px-1 py-0.5 rounded">createToken</code> function to deploy your smart contract.</li>
                             <li>The transaction value will be a one-time deployment fee of <span className="font-mono text-green-400 font-bold">{baseFee ? `${baseFee} ETH` : '...'}</span> plus a standard Base network gas fee.</li>
                             <li>Upon confirmation, a unique ERC20 token contract is created, and the total supply is minted directly to your wallet. You are the sole owner.</li>
