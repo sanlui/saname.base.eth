@@ -8,6 +8,13 @@ const TwitterIcon = () => (
     </svg>
 );
 
+const FarcasterIcon = () => (
+    <svg className="h-5 w-5 text-text-primary" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <title>Farcaster logo</title>
+        <path d="M16.1 17.1H7.9a2.5 2.5 0 0 1-2.5-2.5V9.4a2.5 2.5 0 0 1 2.5-2.5h8.2a2.5 2.5 0 0 1 2.5 2.5v5.2a2.5 2.5 0 0 1-2.5 2.5Zm-5.7-2.5h3.2V9.4H7.9v5.2h2.5Z"/>
+    </svg>
+);
+
 const TelegramIcon = () => (
     <svg className="h-5 w-5 text-text-primary" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
         <title>Telegram logo</title>
@@ -18,6 +25,11 @@ const TelegramIcon = () => (
 
 const Footer: React.FC = () => {
     const abbreviatedAddress = `${contractAddress.substring(0, 6)}...${contractAddress.substring(contractAddress.length - 4)}`;
+    const websiteUrl = "https://www.disrole.com/";
+    const shareText = "Create your own ERC20 token on Base with Disrole, the no-code token creator!";
+    const xShareUrl = `https://x.com/intent/post?url=${encodeURIComponent(websiteUrl)}&text=${encodeURIComponent(shareText)}`;
+    const farcasterShareUrl = `https://warpcast.com/~/compose?embeds[]=${encodeURIComponent(websiteUrl)}`;
+    
     return (
         <footer className="border-t border-border mt-16 py-10">
             <div className="container mx-auto px-4">
@@ -29,8 +41,11 @@ const Footer: React.FC = () => {
                         © {new Date().getFullYear()} Disrole. All rights reserved.
                     </div>
                     <div className="flex gap-3">
-                       <a href="https://x.com" target="_blank" rel="noopener noreferrer" aria-label="Follow on X" className="flex items-center justify-center h-10 w-10 rounded-full bg-border hover:bg-primary transition-colors">
+                       <a href={xShareUrl} target="_blank" rel="noopener noreferrer" aria-label="Share on X" className="flex items-center justify-center h-10 w-10 rounded-full bg-border hover:bg-primary transition-colors">
                             <TwitterIcon />
+                        </a>
+                        <a href={farcasterShareUrl} target="_blank" rel="noopener noreferrer" aria-label="Share on Farcaster" className="flex items-center justify-center h-10 w-10 rounded-full bg-border hover:bg-primary transition-colors">
+                            <FarcasterIcon />
                         </a>
                         <a href="https://telegram.org" target="_blank" rel="noopener noreferrer" aria-label="Join on Telegram" className="flex items-center justify-center h-10 w-10 rounded-full bg-border hover:bg-primary transition-colors">
                             <TelegramIcon />
