@@ -7,7 +7,7 @@ import Footer from './components/Footer';
 import WalletSelectionModal from './components/WalletSelectionModal';
 import { contractAddress, contractABI } from './constants';
 import type { Token, EIP6963ProviderDetail } from './types';
-import { ethers, Contract, BrowserProvider, JsonRpcProvider } from 'ethers';
+import { ethers, Contract, BrowserProvider, JsonRpcProvider, Log } from 'ethers';
 
 // Announce that the app is ready to receive wallet provider info
 const announceProvider = () => {
@@ -84,20 +84,34 @@ const App: React.FC = () => {
     try {
         const contract = new Contract(contractAddress, contractABI, readOnlyProvider);
         const filter = contract.filters.TokenCreated();
-        const logs = await contract.queryFilter(filter, 0, 'latest');
         
-        const tokenPromises = logs.map(async (log) => {
+        const latestBlockNumber = await readOnlyProvider.getBlockNumber();
+        const chunkSize = 49999;
+        let allLogs: Log[] = [];
+
+        for (let fromBlock = 0; fromBlock <= latestBlockNumber; fromBlock += chunkSize) {
+            const toBlock = Math.min(fromBlock + chunkSize - 1, latestBlockNumber);
+            const logs = await contract.queryFilter(filter, fromBlock, toBlock);
+            allLogs = [...allLogs, ...logs];
+        }
+        
+        const tokenPromises = allLogs.map(async (log) => {
             const block = await readOnlyProvider.getBlock(log.blockNumber);
-            const tokenAddress = log.args.tokenAddress;
+            // The `log.args` are not guaranteed to be present directly on the Log object
+            // by some providers/ethers versions. It's safer to parse the log.
+            const parsedLog = contract.interface.parseLog({ topics: log.topics as string[], data: log.data });
+            const args = parsedLog!.args;
+
+            const tokenAddress = args.tokenAddress;
 
             const localMeta = localMetadata[tokenAddress.toLowerCase()] || {};
             
             return {
-                name: log.args.name,
-                symbol: log.args.symbol,
-                creator: log.args.creator,
+                name: args.name,
+                symbol: args.symbol,
+                creator: args.creator,
                 address: tokenAddress,
-                supply: log.args.supply.toString(),
+                supply: args.supply.toString(),
                 timestamp: block ? block.timestamp * 1000 : undefined,
                 txHash: log.transactionHash,
                 decimals: 18, // All tokens created have 18 decimals by default

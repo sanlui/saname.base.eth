@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import type { EIP6963ProviderDetail } from '../types';
 
@@ -50,7 +51,7 @@ const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({
               >
                 <img
                   src={wallet.info.icon}
-                  alt={`${wallet.info.name} icon`}
+                  alt={`${wallet.info.name} wallet logo`}
                   className="w-8 h-8 mr-4 rounded-full"
                 />
                 <span className="font-semibold text-text-primary">{wallet.info.name}</span>
@@ -62,6 +63,7 @@ const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({
         {isConnecting && (
           <div className="mt-4 flex items-center justify-center text-text-secondary">
             <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <title>Loading spinner</title>
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
@@ -74,6 +76,18 @@ const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({
                 {error}
             </div>
         )}
+
+        <div className="mt-6 pt-4 border-t border-border">
+          <div className="text-left text-xs p-3 bg-background rounded-lg border border-info/20 flex items-start gap-3">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-info flex-shrink-0 mt-px" viewBox="0 0 20 20" fill="currentColor">
+                  <title>Information icon</title>
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+              <p className="text-text-secondary">
+                  <strong>Permission Clarification:</strong> You will be asked to connect your wallet to view your public address, and to sign a gas-free message to verify you are the owner. This is a secure, read-only action and does not grant any permission to access your funds or perform transactions.
+              </p>
+          </div>
+        </div>
       </div>
     </div>
   );
