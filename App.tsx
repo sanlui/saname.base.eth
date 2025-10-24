@@ -184,7 +184,7 @@ const App: React.FC = () => {
     } catch (error: any) {
         console.error("Wallet connection error:", error);
         let message = "An error occurred while connecting. Please try again.";
-        if (error.code === 4001 || (error.message && error.message.toLowerCase().includes('user rejected'))) {
+        if (error.code === 'ACTION_REJECTED' || error.code === 4001 || (error.message && error.message.toLowerCase().includes('user rejected'))) {
           message = "Connection request cancelled in wallet.";
         }
         setConnectionError(message);
