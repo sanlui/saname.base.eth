@@ -58,10 +58,9 @@ const App: React.FC = () => {
     setReadOnlyProvider(provider);
   }, []);
 
-  // EIP-6963 Wallet Discovery and legacy `window.ethereum` handling
+  // EIP-6963 Wallet Discovery
   useEffect(() => {
     const ALLOWED_WALLETS = [
-      'metamask',
       'base wallet',
       'zerion wallet',
       'okx wallet',
@@ -86,31 +85,7 @@ const App: React.FC = () => {
     window.addEventListener('eip6963:announceProvider', handleAnnounceProvider);
     announceProvider();
 
-    // After a short delay, check for a legacy MetaMask provider
-    // that was not announced via EIP-6963.
-    const timeoutId = setTimeout(() => {
-      if (typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask) {
-        setWallets(currentWallets => {
-          const isAnnounced = currentWallets.some(w => w.provider === window.ethereum);
-          if (!isAnnounced) {
-            const legacyWallet: EIP6963ProviderDetail = {
-              info: {
-                uuid: 'legacy-injected-metamask',
-                name: 'MetaMask',
-                icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgdmlld0JveD0iMCAwIDI1NiAyNTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbD0iI0Y2ODY1QyIgZD0iTTIwNS4yIDUwLjZMMTI5LjYgMTAuOEMxMjYuMyA5LjEgMTIyLjcgOS4xIDEyMS40IDEwLjhsLTc1LjYgMzkuOEM0Mi42IDUyLjcgNDEuMSA1Ni4zIDQxLjEgNTkuOXY1NS4yYzAgMy42IDEuNSA3LjMgNC43IDkuOGw3NS42IDM5LjhjMS43IDEgMy42IDEuMyA1LjQgMS4zcyAzLjctLjQgNS40LTEuM2w3NS42LTM5LjhjMy4xLTIuNSA0LjctNi4yIDQuNy05LjhWNTkuOWMwLTMuNi0xLjUtNy4zLTQuNy05LDN6bS0xNjIuMiA2MC4yVjY1LjRsNDkuMyAxNTIuMy00OS4zLTE3LjV6bTEyNy44LTE4LjVMOTYgMjEzLjFsNDkuMy0xNy41VjkyLjh6bS02My45LTEuNkw0MS43IDY1LjRsNDguMSAxNy4xIDQ4LjEtMTcuMUw5Ni41IDkxLjV6bTAtNzMuNGw0OC4xIDI1LTQ4LjEgMjUtNDguMS0yNXptMTIuOCA4Ny4zbDI3LjEgMTMuNSAyNy4xLTEzLjUtMjcuMS01NS4xek0xOTMgOTIuOGw0Ny45IDI1LjItNDcuOS0yNS4yek0xOTMgNjUuNEw5Ni40IDIxMy4xbDI1LjQtOTAuNnoiLz48L3N2Zz4=',
-                rdns: 'io.metamask.legacy',
-              },
-              provider: window.ethereum,
-            };
-            return [legacyWallet, ...currentWallets];
-          }
-          return currentWallets;
-        });
-      }
-    }, 200);
-
     return () => {
-      clearTimeout(timeoutId);
       window.removeEventListener('eip6963:announceProvider', handleAnnounceProvider);
     };
   }, []);
