@@ -8,6 +8,7 @@ import WalletSelectionModal from './components/WalletSelectionModal';
 import { contractAddress, contractABI } from './constants';
 import type { Token, EIP6963ProviderDetail, EIP1193Provider } from './types';
 import { ethers, Contract, BrowserProvider, JsonRpcProvider, Log } from 'ethers';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Extend the Window interface to include properties injected by wallets.
 declare global {
@@ -85,7 +86,7 @@ const App: React.FC = () => {
                 uuid: 'legacy-injected',
                 name: window.ethereum?.isMetaMask ? 'MetaMask' : 'Injected Wallet',
                 icon: window.ethereum?.isMetaMask
-                  ? 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgdmlld0JveD0iMCAwIDI1NiAyNTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbD0iI0Y2ODY1QyIgZD0iTTIwNS4yIDUwLjZMMTI5LjYgMTAuOEMxMjYuMyA5LjEgMTIyLjcgOS4xIDEyMS40IDEwLjhsLTc1LjYgMzkuOEM0Mi42IDUyLjcgNDEuMSA1Ni4zIDQxLjEgNTkuOXY1NS4yYzAgMy42IDEuNSA3LjMgNC43IDkuOGw3NS42IDM5LjhjMS43IDEgMy42IDEuMyA1LjQgMS4zcyAzLjctLjQgNS40LTEuM2w3NS42LTM5LjhjMy4xLTIuNSA0LjctNi4yIDQuNy05LjhWNTkuOWMwLTMuNi0xLjUtNy4zLTQuNy05LjN6bS0xNjIuMiA2MC4yVjY1LjRsNDkuMyAxNTIuMy00OS4zLTE3LjV6bTEyNy44LTE4LjVMOTYgMjEzLjFsNDkuMy0xNy41VjkyLjh6bS02My45LTEuNkw0MS43IDY1LjRsNDguMSAxNy4xIDQ4LjEtMTcuMUw5Ni41IDkxLjV6bTAtNzMuNGw0OC4xIDI1LTQ4LjEgMjUtNDguMS0yNXptMTIuOCA4Ny4zbDI3LjEgMTMuNSAyNy4xLTEzLjUtMjcuMS01NS4xek0xOTMgOTIuOGw0Ny45IDI1LjItNDcuOS0yNS4yek0xOTMgNjUuNEw5Ni40IDIxMy4xbDI1LjQtOTAuNnoiLz48L3N2Zz4='
+                  ? 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgdmlld0JveD0iMCAwIDI1NiAyNTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbD0iI0Y2ODY1QyIgZD0iTTIwNS4yIDUwLjZMMTI5LjYgMTAuOEMxMjYuMyA5LjEgMTIyLjcgOS4xIDEyMS40IDEwLjhsLTc1LjYgMzkuOEM0Mi42IDUyLjcgNDEuMSA1Ni4zIDQxLjEgNTkuOXY1NS4yYzAgMy42IDEuNSA3LjMgNC43IDkuOGw3NS42IDM5LjhjMS43IDEgMy42IDEuMyA1LjQgMS4zcyAzLjctLjQgNS40LTEuM2w3NS42LTM5LjhjMy4xLTIuNSA0LjctNi4yIDQuNy05LjhWNTkuOWMwLTMuNi0xLjUtNy4zLTQuNy05LDN6bS0xNjIuMiA2MC4yVjY1LjRsNDkuMyAxNTIuMy00OS4zLTE3LjV6bTEyNy44LTE4LjVMOTYgMjEzLjFsNDkuMy0xNy41VjkyLjh6bS02My45LTEuNkw0MS43IDY1LjRsNDguMSAxNy4xIDQ4LjEtMTcuMUw5Ni41IDkxLjV6bTAtNzMuNGw0OC4xIDI1LTQ4LjEgMjUtNDguMS0yNXptMTIuOCA4Ny4zbDI3LjEgMTMuNSAyNy4xLTEzLjUtMjcuMS01NS4xek0xOTMgOTIuOGw0Ny45IDI1LjItNDcuOS0yNS4yek0xOTMgNjUuNEw5Ni40IDIxMy4xbDI1LjQtOTAuNnoiLz48L3N2Zz4='
                   : 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z"/></svg>',
                 rdns: 'io.metamask.legacy',
               },
@@ -206,6 +207,28 @@ const App: React.FC = () => {
     setConnectionError(null);
     try {
         const provider = new BrowserProvider(wallet.provider);
+        
+        // Ensure wallet is on Base Mainnet
+        const network = await provider.getNetwork();
+        if (network.chainId !== 8453n) {
+          try {
+            await provider.send('wallet_switchEthereumChain', [{ chainId: '0x2105' }]);
+          } catch (switchError: any) {
+            // This error code indicates that the chain has not been added to MetaMask.
+            if (switchError.code === 4902) {
+              await provider.send('wallet_addEthereumChain', [{
+                chainId: '0x2105',
+                chainName: 'Base',
+                nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+                rpcUrls: ['https://mainnet.base.org'],
+                blockExplorerUrls: ['https://basescan.org']
+              }]);
+            } else {
+              throw switchError;
+            }
+          }
+        }
+        
         const accounts = await provider.send('eth_requestAccounts', []);
 
         if (accounts.length > 0) {
@@ -243,30 +266,62 @@ const App: React.FC = () => {
   const handleScrollToCreation = () => {
     creationSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        duration: 0.6,
+        ease: 'easeOut'
+      }
+    }
+  };
   
   return (
     <div className="flex flex-col min-h-screen">
       <Header onConnectWallet={handleConnectWallet} accountAddress={accountAddress} onDisconnect={handleDisconnect} />
       <main className="flex-grow container mx-auto px-4 py-12 md:py-20">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20 animate-fade-in-up">
+        <motion.div 
+          className="max-w-7xl mx-auto"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.div variants={itemVariants} className="text-center mb-20">
               <h1 className="text-5xl md:text-7xl font-black font-display mb-6 leading-tight bg-gradient-to-r from-gradient-start to-gradient-end text-transparent bg-clip-text">
                   Launch on Base. Instantly.
               </h1>
               <p className="text-lg md:text-xl text-text-secondary max-w-3xl mx-auto">
                 Our secure, no-code tool empowers you to deploy a custom ERC20 token in minutes. You get full ownership and control, all on the fast and low-cost Base network.
               </p>
-              <button
+              <motion.button
                   onClick={handleScrollToCreation}
-                  className="mt-10 bg-primary hover:bg-primary-hover text-white font-bold text-lg py-4 px-10 rounded-full transition-all duration-300 ease-in-out hover:shadow-glow-primary transform hover:-translate-y-1"
+                  className="mt-10 bg-primary text-white font-bold text-lg py-4 px-10 rounded-full transition-all duration-300 ease-in-out shadow-lg hover:shadow-glow-primary"
+                  whileHover={{ y: -4, scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
               >
                   Start Creating Your Token
-              </button>
-          </div>
+              </motion.button>
+          </motion.div>
           
-          <Features />
+          <motion.div variants={itemVariants}>
+            <Features />
+          </motion.div>
 
-          <div ref={creationSectionRef} className="grid grid-cols-1 lg:grid-cols-5 gap-10 my-16 pt-16">
+          <motion.div ref={creationSectionRef} className="grid grid-cols-1 lg:grid-cols-5 gap-10 my-16 pt-16" variants={itemVariants}>
             <div className="lg:col-span-3">
               <TokenCreation
                 accountAddress={accountAddress}
@@ -279,19 +334,22 @@ const App: React.FC = () => {
             <div className="lg:col-span-2">
               <LatestTokens tokens={tokens} isLoading={isLoadingTokens} error={tokensError} onRetry={fetchTokens} />
             </div>
-          </div>
+          </motion.div>
 
-        </div>
+        </motion.div>
       </main>
       <Footer />
-      <WalletSelectionModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        wallets={wallets}
-        onSelectWallet={handleSelectWallet}
-        isConnecting={isConnecting}
-        error={connectionError}
-      />
+      <AnimatePresence>
+        {isModalOpen && (
+          <WalletSelectionModal
+            onClose={() => setIsModalOpen(false)}
+            wallets={wallets}
+            onSelectWallet={handleSelectWallet}
+            isConnecting={isConnecting}
+            error={connectionError}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

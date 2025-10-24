@@ -1,15 +1,15 @@
 import React from 'react';
 import type { Token } from '../types';
 import { ethers } from 'ethers';
+import { motion } from 'framer-motion';
 
 interface SuccessModalProps {
-  isOpen: boolean;
   onClose: () => void;
   tokenDetails: Token | null;
 }
 
-const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, tokenDetails }) => {
-  if (!isOpen || !tokenDetails) return null;
+const SuccessModal: React.FC<SuccessModalProps> = ({ onClose, tokenDetails }) => {
+  if (!tokenDetails) return null;
 
   const abbreviateAddress = (address: string) => {
     if (!address) return '';
@@ -17,12 +17,20 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, tokenDetai
   };
 
   return (
-    <div
-      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity duration-300 animate-fade-in-up"
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
       onClick={onClose}
     >
-      <div
-        className="bg-surface border border-border rounded-2xl shadow-glow-primary-lg p-6 w-full max-w-lg m-4 transform transition-all duration-300"
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 20, opacity: 0 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+        className="bg-surface border border-border rounded-2xl shadow-glow-primary-lg p-6 w-full max-w-lg m-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="text-center">
@@ -126,8 +134,8 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, tokenDetai
                 Done
             </button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

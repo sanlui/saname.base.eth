@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 
 const DeployIcon = () => (
     <div className="flex items-center justify-center h-16 w-16 rounded-2xl bg-primary/10 border border-primary/20">
@@ -47,13 +48,18 @@ const features = [
 ];
 
 const Features: React.FC = () => (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 my-20 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 my-20">
         {features.map(feature => (
-            <div key={feature.title} className="bg-surface/70 border border-border rounded-2xl p-8 text-center flex flex-col items-center transition-all duration-300 hover:border-primary/50 hover:bg-surface transform hover:-translate-y-2">
+            <motion.div 
+                key={feature.title} 
+                className="bg-surface/70 border border-border rounded-2xl p-8 text-center flex flex-col items-center transition-all duration-300 hover:border-primary/50 hover:bg-surface"
+                whileHover={{ y: -8, scale: 1.03 }}
+                transition={{ duration: 0.2 }}
+            >
                 {feature.icon}
                 <h3 className="text-xl font-bold text-text-primary mt-6 mb-2">{feature.title}</h3>
                 <p className="text-text-secondary">{feature.description}</p>
-            </div>
+            </motion.div>
         ))}
     </div>
 );

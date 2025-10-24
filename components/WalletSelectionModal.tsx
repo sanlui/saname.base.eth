@@ -1,8 +1,8 @@
 import React from 'react';
 import type { EIP6963ProviderDetail } from '../types';
+import { motion } from 'framer-motion';
 
 interface WalletSelectionModalProps {
-  isOpen: boolean;
   onClose: () => void;
   wallets: EIP6963ProviderDetail[];
   onSelectWallet: (wallet: EIP6963ProviderDetail) => void;
@@ -11,22 +11,27 @@ interface WalletSelectionModalProps {
 }
 
 const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({
-  isOpen,
   onClose,
   wallets,
   onSelectWallet,
   isConnecting,
   error,
 }) => {
-  if (!isOpen) return null;
-
   return (
-    <div 
-      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity duration-300 animate-fade-in-up"
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50"
       onClick={onClose}
     >
-      <div 
-        className="bg-surface border border-border rounded-2xl shadow-glow-primary-lg p-6 w-full max-w-sm m-4 transform transition-all duration-300"
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+        className="bg-surface border border-border rounded-2xl shadow-glow-primary-lg p-6 w-full max-w-sm m-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-6 border-b border-border pb-4">
@@ -35,9 +40,13 @@ const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({
         </div>
 
         {wallets.length > 1 && (
-          <div className="text-xs text-center p-3 mb-4 rounded-lg bg-info/10 text-blue-300 animate-fade-in-up">
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-xs text-center p-3 mb-4 rounded-lg bg-info/10 text-blue-300"
+          >
             Multiple wallets detected. Please choose your preferred wallet to continue.
-          </div>
+          </motion.div>
         )}
 
         <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
@@ -65,24 +74,30 @@ const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({
         </div>
 
         {isConnecting && (
-          <div className="mt-4 flex items-center justify-center text-text-secondary animate-fade-in-up">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }} 
+            className="mt-4 flex items-center justify-center text-text-secondary">
             <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <title>Loading spinner</title>
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
             <span>Connecting... Please check your wallet.</span>
-          </div>
+          </motion.div>
         )}
 
         {error && (
-            <div className="mt-4 p-3 bg-error/10 text-red-400 text-sm rounded-lg flex items-center justify-center gap-2 break-words animate-fade-in-up">
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-4 p-3 bg-error/10 text-red-400 text-sm rounded-lg flex items-center justify-center gap-2 break-words">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
                   <title>Error icon</title>
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
                 <span>{error}</span>
-            </div>
+            </motion.div>
         )}
 
         <div className="mt-6 pt-6 border-t border-border">
@@ -96,8 +111,8 @@ const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({
               </p>
           </div>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

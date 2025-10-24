@@ -3,6 +3,7 @@ import SuccessModal from './SuccessModal';
 import { contractAddress, contractABI } from '../constants';
 import type { Token } from '../types';
 import { ethers, BrowserProvider, Contract } from 'ethers';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface TokenCreationProps {
   accountAddress: string | null;
@@ -60,24 +61,31 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
       const supply = ethers.parseUnits(tokenSupply, decimals);
       const feeInWei = ethers.parseEther(baseFee || '0');
 
-      // --- Pre-flight gas estimation and balance check ---
+      // --- Pre-flight gas estimation and balance check for Base Network ---
       setFeedback({ type: 'info', message: 'Estimating transaction cost...' });
       
       const estimatedGas = await contract.createToken.estimateGas(tokenName, tokenSymbol, supply, { value: feeInWei });
-      const feeData = await provider.getFeeData();
       
-      // For EIP-1559 networks like Base, maxFeePerGas is a more accurate representation of the potential cost.
-      // We fall back to gasPrice for legacy networks or if maxFeePerGas is not available.
+      const feeData = await provider.getFeeData();
       const gasPriceForEstimation = feeData.maxFeePerGas ?? feeData.gasPrice;
 
       if (!gasPriceForEstimation) {
           throw new Error("Could not get current gas price from the network. Please try again.");
       }
 
-      // Calculate estimated cost with a 20% buffer to account for potential gas price fluctuations.
-      // Cast to BigInt to prevent type errors when multiplying with other bigint values.
-      const estimatedGasCost = (BigInt(estimatedGas) * BigInt(gasPriceForEstimation) * 120n) / 100n;
-      const totalCost = feeInWei + estimatedGasCost;
+      const l2ExecutionFee = BigInt(estimatedGas) * BigInt(gasPriceForEstimation);
+
+      const gasOracleAddress = '0x420000000000000000000000000000000000000F';
+      const gasOracleAbi = ['function getL1Fee(bytes) view returns (uint256)'];
+      const gasOracle = new Contract(gasOracleAddress, gasOracleAbi, provider);
+
+      const transactionData = contract.interface.encodeFunctionData('createToken', [tokenName, tokenSymbol, supply]);
+      const l1DataFee = await gasOracle.getL1Fee(transactionData);
+
+      const totalGasCost = l2ExecutionFee + l1DataFee;
+      const totalGasCostWithBuffer = (totalGasCost * 120n) / 100n; 
+
+      const totalCost = feeInWei + totalGasCostWithBuffer;
       const balance = await provider.getBalance(accountAddress);
 
       if (balance < totalCost) {
@@ -87,9 +95,7 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
           setIsLoading(false);
           return;
       }
-      // --- End of pre-flight check ---
-
-      // Add a 20% buffer to the gas limit for safety
+      
       const gasLimitWithBuffer = (BigInt(estimatedGas) * 120n) / 100n; 
       
       const tx = await contract.createToken(tokenName, tokenSymbol, supply, { 
@@ -211,7 +217,7 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
 
   return (
     <>
-      <div className="bg-surface border border-border rounded-2xl shadow-lg animate-fade-in-up" style={{animationDelay: '0.4s'}}>
+      <div className="bg-surface border border-border rounded-2xl shadow-lg">
         <div className="p-6 md:p-8">
             <div className="border-b border-border pb-6 mb-8">
                 <h2 className="text-3xl font-bold text-text-primary font-display">Create Your Custom ERC20 Token</h2>
@@ -236,8 +242,15 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
                                 accept="image/png, image/jpeg, image/gif"
                                 className="hidden"
                             />
+                            <AnimatePresence>
                             {imagePreview ? (
-                                <>
+                                <motion.div
+                                    key="preview"
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.8 }}
+                                    className="w-full h-full"
+                                >
                                     <img src={imagePreview} alt="Preview of the uploaded token icon." className="w-full h-full max-h-[180px] object-contain rounded-lg" />
                                     <button 
                                         type="button" 
@@ -250,17 +263,24 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                         </svg>
                                     </button>
-                                </>
+                                </motion.div>
                             ) : (
-                                <>
+                                <motion.div
+                                    key="placeholder"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    className="flex flex-col items-center justify-center"
+                                >
                                     <svg className="w-12 h-12 text-text-secondary/50 group-hover:text-primary transition-colors" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                                         <title>Upload icon</title>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
                                     </svg>
                                     <p className="font-semibold mt-4 text-text-primary">Click to upload</p>
                                     <p className="text-xs text-text-secondary mt-1">PNG, JPG, GIF (Max 2MB)</p>
-                                </>
+                                </motion.div>
                             )}
+                            </AnimatePresence>
                         </div>
                     </div>
                     <div className="lg:col-span-3 space-y-6">
@@ -335,25 +355,34 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
                     </div>
 
                     <div className="text-center space-y-4">
+                        <AnimatePresence>
                         {feedback && (
-                            <div className={`text-center p-3 rounded-lg text-sm break-words flex items-center justify-center gap-2 ${
-                            feedback.type === 'success' ? 'bg-success/10 text-green-400' : 
-                            feedback.type === 'error' ? 'bg-error/10 text-red-400' :
-                            'bg-info/10 text-blue-400'
-                            }`}>
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className={`text-center p-3 rounded-lg text-sm break-words flex items-center justify-center gap-2 ${
+                                feedback.type === 'success' ? 'bg-success/10 text-green-400' : 
+                                feedback.type === 'error' ? 'bg-error/10 text-red-400' :
+                                'bg-info/10 text-blue-400'
+                                }`}
+                            >
                              {feedback.type === 'error' && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>}
                             {feedback.message}
-                            </div>
+                            </motion.div>
                         )}
+                        </AnimatePresence>
                         {!accountAddress && (
                             <div className="text-center p-3 rounded-lg text-sm bg-yellow-400/10 text-yellow-400">Please connect your wallet to deploy a token.</div>
                         )}
                     </div>
 
-                    <button 
+                    <motion.button 
                         type="submit" 
                         disabled={isLoading || !baseFee || !accountAddress} 
-                        className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 disabled:bg-border disabled:text-text-secondary disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center text-lg shadow-lg hover:shadow-glow-primary disabled:shadow-none"
+                        className="w-full bg-primary text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 ease-in-out disabled:bg-border disabled:text-text-secondary disabled:cursor-not-allowed flex items-center justify-center text-lg shadow-lg disabled:shadow-none"
+                        whileHover={{ y: isLoading ? 0 : -2, boxShadow: isLoading ? 'none' : '0 0 20px var(--glow-primary-color)' }}
+                        whileTap={{ scale: isLoading ? 1 : 0.98 }}
                     >
                         {isLoading ? (
                         <>
@@ -367,7 +396,7 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
                         ) : (
                         `Launch Token (${baseFee ? `${baseFee} ETH + Gas` : '...'})`
                         )}
-                    </button>
+                    </motion.button>
                     <p className="text-xs text-text-secondary text-center px-4">
                         By proceeding, you agree you are deploying a smart contract and are responsible for the token you create.
                     </p>
@@ -375,11 +404,14 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
             </form>
         </div>
       </div>
-      <SuccessModal 
-        isOpen={isSuccessModalOpen}
-        onClose={handleCloseSuccessModal}
-        tokenDetails={newTokenDetails}
-      />
+      <AnimatePresence>
+        {isSuccessModalOpen && (
+            <SuccessModal 
+                onClose={handleCloseSuccessModal}
+                tokenDetails={newTokenDetails}
+            />
+        )}
+      </AnimatePresence>
     </>
   );
 };
