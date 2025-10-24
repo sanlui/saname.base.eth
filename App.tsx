@@ -206,33 +206,36 @@ const App: React.FC = () => {
     setIsConnecting(true);
     setConnectionError(null);
     try {
-        const provider = new BrowserProvider(wallet.provider);
+        let browserProvider = new BrowserProvider(wallet.provider);
         
-        // Ensure wallet is on Base Mainnet
-        const network = await provider.getNetwork();
+        const network = await browserProvider.getNetwork();
         if (network.chainId !== 8453n) {
           try {
-            await provider.send('wallet_switchEthereumChain', [{ chainId: '0x2105' }]);
+            await browserProvider.send('wallet_switchEthereumChain', [{ chainId: '0x2105' }]);
+            // After switching, create a new provider instance to reflect the new chain
+            browserProvider = new BrowserProvider(wallet.provider);
           } catch (switchError: any) {
             // This error code indicates that the chain has not been added to MetaMask.
             if (switchError.code === 4902) {
-              await provider.send('wallet_addEthereumChain', [{
+              await browserProvider.send('wallet_addEthereumChain', [{
                 chainId: '0x2105',
                 chainName: 'Base',
                 nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
                 rpcUrls: ['https://mainnet.base.org'],
                 blockExplorerUrls: ['https://basescan.org']
               }]);
+              // Also create a new provider instance after adding and switching
+              browserProvider = new BrowserProvider(wallet.provider);
             } else {
               throw switchError;
             }
           }
         }
         
-        const accounts = await provider.send('eth_requestAccounts', []);
+        const accounts = await browserProvider.send('eth_requestAccounts', []);
 
         if (accounts.length > 0) {
-            const signer = await provider.getSigner();
+            const signer = await browserProvider.getSigner();
             const address = await signer.getAddress();
             
             // Gas-free signature to prove ownership
@@ -241,7 +244,7 @@ const App: React.FC = () => {
             await signer.signMessage(message);
 
             setAccountAddress(address);
-            setProvider(provider);
+            setProvider(browserProvider);
             setIsModalOpen(false);
         } else {
             setConnectionError("No accounts found. Please make sure your wallet is unlocked and accessible.");
