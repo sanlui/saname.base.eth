@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import TokenCreation from './components/TokenCreation';
@@ -8,7 +9,8 @@ import WalletSelectionModal from './components/WalletSelectionModal';
 import { contractAddress, contractABI } from './constants';
 import type { Token, EIP6963ProviderDetail, EIP1193Provider } from './types';
 import { ethers, Contract, BrowserProvider, JsonRpcProvider, Log } from 'ethers';
-import { motion, AnimatePresence } from 'framer-motion';
+// Fix: Import Variants type from framer-motion to resolve type errors.
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 
 // Extend the Window interface to include properties injected by wallets.
 declare global {
@@ -31,8 +33,21 @@ const announceProvider = () => {
   }
 };
 
-const createSignatureMessage = (nonce: string): string => {
-  return `Welcome to Disrole!\n\nPlease sign this message to securely connect your wallet. This action is free and will not trigger a transaction.\n\nNonce: ${nonce}`;
+const createSignatureMessage = (address: string, chainId: number, nonce: string): string => {
+  const domain = window.location.host;
+  const origin = window.location.origin;
+  const issuedAt = new Date().toISOString();
+
+  return `${domain} wants you to sign in with your Ethereum account:
+${address}
+
+This is a secure, gas-free message to verify ownership of your wallet. This action will not trigger a blockchain transaction.
+
+URI: ${origin}
+Version: 1
+Chain ID: ${chainId}
+Nonce: ${nonce}
+Issued At: ${issuedAt}`;
 };
 
 
@@ -224,9 +239,11 @@ const App: React.FC = () => {
         const address = await signer.getAddress();
 
         if (address) {
-            // Gas-free signature to prove ownership.
-            const nonce = new Date().getTime().toString();
-            const message = createSignatureMessage(nonce);
+            // Re-fetch network info after potential switch to ensure correct chainId in signature.
+            const currentNetwork = await browserProvider.getNetwork();
+            // Gas-free signature to prove ownership with an EIP-4361 inspired message for enhanced security.
+            const nonce = window.crypto.randomUUID(); // Cryptographically secure random nonce
+            const message = createSignatureMessage(address, Number(currentNetwork.chainId), nonce);
             await signer.signMessage(message);
 
             setAccountAddress(address);
@@ -256,7 +273,8 @@ const App: React.FC = () => {
     creationSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
-  const containerVariants = {
+  // Fix: Explicitly type variants with the Variants type to fix type inference issues.
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -266,7 +284,8 @@ const App: React.FC = () => {
     }
   };
 
-  const itemVariants = {
+  // Fix: Explicitly type variants with the Variants type to fix type inference issue with the 'ease' property.
+  const itemVariants: Variants = {
     hidden: { y: 20, opacity: 0 },
     visible: {
       y: 0,
