@@ -86,7 +86,7 @@ const App: React.FC = () => {
         const filter = contract.filters.TokenCreated();
         
         const latestBlockNumber = await readOnlyProvider.getBlockNumber();
-        const chunkSize = 49999;
+        const chunkSize = 20000;
         let allLogs: Log[] = [];
 
         for (let fromBlock = 0; fromBlock <= latestBlockNumber; fromBlock += chunkSize) {

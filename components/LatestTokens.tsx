@@ -63,7 +63,7 @@ const LatestTokens: React.FC<LatestTokensProps> = ({ tokens, isLoading, error, o
     if (isLoading) {
       return (
         <tr>
-          <td colSpan={5} className="text-center py-8 text-text-secondary">
+          <td colSpan={6} className="text-center py-8 text-text-secondary">
             <p>Loading latest tokens...</p>
           </td>
         </tr>
@@ -73,7 +73,7 @@ const LatestTokens: React.FC<LatestTokensProps> = ({ tokens, isLoading, error, o
     if (error) {
        return (
           <tr>
-            <td colSpan={5}>
+            <td colSpan={6}>
               <div className="text-center py-8 px-4 text-red-300">
                   <div className="mx-auto flex items-center justify-center h-10 w-10 rounded-full bg-error/20 mb-3">
                     <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -97,7 +97,7 @@ const LatestTokens: React.FC<LatestTokensProps> = ({ tokens, isLoading, error, o
     if (tokens.length === 0) {
       return (
         <tr>
-          <td colSpan={5} className="text-center py-8 text-text-secondary">
+          <td colSpan={6} className="text-center py-8 text-text-secondary">
             <p>Be the first to launch a token!</p>
           </td>
         </tr>
@@ -128,6 +128,15 @@ const LatestTokens: React.FC<LatestTokensProps> = ({ tokens, isLoading, error, o
                 <a href={`https://basescan.org/address/${token.address}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" aria-label="View token contract on Basescan">
                 {abbreviateAddress(token.address)}
               </a>
+            </td>
+            <td className="p-3 font-mono text-xs">
+                {token.txHash ? (
+                    <a href={`https://basescan.org/tx/${token.txHash}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" aria-label="View transaction on Basescan">
+                        {abbreviateAddress(token.txHash)}
+                    </a>
+                ) : (
+                    <span className="text-text-secondary">N/A</span>
+                )}
             </td>
             <td className="p-3">
               <div className="flex items-center gap-3 justify-start">
@@ -195,6 +204,7 @@ const LatestTokens: React.FC<LatestTokensProps> = ({ tokens, isLoading, error, o
               <th className="p-3">CREATOR</th>
               <th className="p-3">AGE</th>
               <th className="p-3">CONTRACT</th>
+              <th className="p-3">TX HASH</th>
               <th className="p-3">LINKS</th>
             </tr>
           </thead>

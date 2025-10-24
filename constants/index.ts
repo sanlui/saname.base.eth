@@ -1,4 +1,3 @@
-
 export const contractAddress = '0x4e9ec042f7d74ab1006b11dab61893388b3a19dd';
 
 export const erc20ABI = [
@@ -30,7 +29,7 @@ export const contractABI = [
 		"outputs": [
 			{
 				"internalType": "address",
-				"name": "",
+				"name": "tokenAddress",
 				"type": "address"
 			}
 		],
@@ -204,7 +203,7 @@ export const contractABI = [
 		"inputs": [
 			{
 				"internalType": "uint256",
-				"name": "",
+				"name": "index",
 				"type": "uint256"
 			}
 		],
@@ -212,7 +211,7 @@ export const contractABI = [
 		"outputs": [
 			{
 				"internalType": "address",
-				"name": "",
+				"name": "tokenAddress",
 				"type": "address"
 			}
 		],
@@ -225,7 +224,7 @@ export const contractABI = [
 		"outputs": [
 			{
 				"internalType": "uint256",
-				"name": "",
+				"name": "fee",
 				"type": "uint256"
 			}
 		],
@@ -244,7 +243,7 @@ export const contractABI = [
 		"outputs": [
 			{
 				"internalType": "string",
-				"name": "",
+				"name": "badge",
 				"type": "string"
 			}
 		],
@@ -255,14 +254,15 @@ export const contractABI = [
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": ""
+				"name": "token",
+				"type": "address"
 			}
 		],
 		"name": "isTokenFromFactory",
 		"outputs": [
 			{
 				"internalType": "bool",
-				"name": "",
+				"name": "isToken",
 				"type": "bool"
 			}
 		],
@@ -275,7 +275,7 @@ export const contractABI = [
 		"outputs": [
 			{
 				"internalType": "address",
-				"name": "",
+				"name": "ownerAddress",
 				"type": "address"
 			}
 		],
@@ -286,14 +286,15 @@ export const contractABI = [
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": ""
+				"name": "user",
+				"type": "address"
 			}
 		],
 		"name": "pendingWithdrawals",
 		"outputs": [
 			{
 				"internalType": "uint256",
-				"name": "",
+				"name": "amount",
 				"type": "uint256"
 			}
 		],
@@ -306,7 +307,7 @@ export const contractABI = [
 		"outputs": [
 			{
 				"internalType": "uint256",
-				"name": "",
+				"name": "count",
 				"type": "uint256"
 			}
 		],
@@ -317,14 +318,15 @@ export const contractABI = [
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": ""
+				"name": "user",
+				"type": "address"
 			}
 		],
 		"name": "userCreatedSupply",
 		"outputs": [
 			{
 				"internalType": "uint256",
-				"name": "",
+				"name": "supply",
 				"type": "uint256"
 			}
 		],
