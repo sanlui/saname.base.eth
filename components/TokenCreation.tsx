@@ -119,7 +119,7 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
       // Check for user rejection first
       if (error.code === 'ACTION_REJECTED' || (error.reason && error.reason.toLowerCase().includes('user rejected'))) {
           message = "Transaction cancelled in wallet.";
-      } else if (error.reason && error.reason.toLowerCase().includes('insufficient funds')) {
+      } else if (error.code === 'INSUFFICIENT_FUNDS' || (error.reason && error.reason.toLowerCase().includes('insufficient funds'))) {
           message = "Transaction failed. Please ensure your wallet has enough ETH for the fee and gas costs.";
       }
       setFeedback({ type: 'error', message });
