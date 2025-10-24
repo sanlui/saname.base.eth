@@ -60,39 +60,48 @@ const App: React.FC = () => {
 
   // EIP-6963 Wallet Discovery and legacy `window.ethereum` handling
   useEffect(() => {
+    const ALLOWED_WALLETS = [
+      'metamask',
+      'base wallet',
+      'zerion wallet',
+      'okx wallet',
+      'rainbow'
+    ];
+
     const handleAnnounceProvider = (event: Event) => {
       const providerDetail = (event as CustomEvent<EIP6963ProviderDetail>).detail;
-      setWallets(currentWallets => {
-        if (currentWallets.some(w => w.info.uuid === providerDetail.info.uuid)) {
-          return currentWallets;
-        }
-        return [...currentWallets, providerDetail];
-      });
+      const walletName = providerDetail.info.name.toLowerCase();
+
+      // Check if the announced wallet is in the allowed list
+      if (ALLOWED_WALLETS.some(allowedName => walletName.includes(allowedName))) {
+        setWallets(currentWallets => {
+          if (currentWallets.some(w => w.info.uuid === providerDetail.info.uuid)) {
+            return currentWallets;
+          }
+          return [...currentWallets, providerDetail];
+        });
+      }
     };
 
     window.addEventListener('eip6963:announceProvider', handleAnnounceProvider);
     announceProvider();
 
-    // After a short delay, check for a legacy window.ethereum provider
+    // After a short delay, check for a legacy MetaMask provider
     // that was not announced via EIP-6963.
     const timeoutId = setTimeout(() => {
-      if (typeof window.ethereum !== 'undefined') {
+      if (typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask) {
         setWallets(currentWallets => {
-          // Check if the injected provider is already in our list by comparing the provider object reference
           const isAnnounced = currentWallets.some(w => w.provider === window.ethereum);
           if (!isAnnounced) {
             const legacyWallet: EIP6963ProviderDetail = {
               info: {
-                uuid: 'legacy-injected',
-                name: window.ethereum?.isMetaMask ? 'MetaMask' : 'Injected Wallet',
-                icon: window.ethereum?.isMetaMask
-                  ? 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgdmlld0JveD0iMCAwIDI1NiAyNTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbD0iI0Y2ODY1QyIgZD0iTTIwNS4yIDUwLjZMMTI5LjYgMTAuOEMxMjYuMyA5LjEgMTIyLjcgOS4xIDEyMS40IDEwLjhsLTc1LjYgMzkuOEM0Mi42IDUyLjcgNDEuMSA1Ni4zIDQxLjEgNTkuOXY1NS4yYzAgMy42IDEuNSA3LjMgNC43IDkuOGw3NS42IDM5LjhjMS43IDEgMy42IDEuMyA1LjQgMS4zcyAzLjctLjQgNS40LTEuM2w3NS42LTM5LjhjMy4xLTIuNSA0LjctNi4yIDQuNy05LjhWNTkuOWMwLTMuNi0xLjUtNy4zLTQuNy05LDN6bS0xNjIuMiA2MC4yVjY1LjRsNDkuMyAxNTIuMy00OS4zLTE3LjV6bTEyNy44LTE4LjVMOTYgMjEzLjFsNDkuMy0xNy41VjkyLjh6bS02My45LTEuNkw0MS43IDY1LjRsNDguMSAxNy4xIDQ4LjEtMTcuMUw5Ni41IDkxLjV6bTAtNzMuNGw0OC4xIDI1LTQ4LjEgMjUtNDguMS0yNXptMTIuOCA4Ny4zbDI3LjEgMTMuNSAyNy4xLTEzLjUtMjcuMS01NS4xek0xOTMgOTIuOGw0Ny45IDI1LjItNDcuOS0yNS4yek0xOTMgNjUuNEw5Ni40IDIxMy4xbDI1LjQtOTAuNnoiLz48L3N2Zz4='
-                  : 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z"/></svg>',
+                uuid: 'legacy-injected-metamask',
+                name: 'MetaMask',
+                icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgdmlld0JveD0iMCAwIDI1NiAyNTYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbD0iI0Y2ODY1QyIgZD0iTTIwNS4yIDUwLjZMMTI5LjYgMTAuOEMxMjYuMyA5LjEgMTIyLjcgOS4xIDEyMS40IDEwLjhsLTc1LjYgMzkuOEM0Mi42IDUyLjcgNDEuMSA1Ni4zIDQxLjEgNTkuOXY1NS4yYzAgMy42IDEuNSA3LjMgNC43IDkuOGw3NS42IDM5LjhjMS43IDEgMy42IDEuMyA1LjQgMS4zcyAzLjctLjQgNS40LTEuM2w3NS42LTM5LjhjMy4xLTIuNSA0LjctNi4yIDQuNy05LjhWNTkuOWMwLTMuNi0xLjUtNy4zLTQuNy05LDN6bS0xNjIuMiA2MC4yVjY1LjRsNDkuMyAxNTIuMy00OS4zLTE3LjV6bTEyNy44LTE4LjVMOTYgMjEzLjFsNDkuMy0xNy41VjkyLjh6bS02My45LTEuNkw0MS43IDY1LjRsNDguMSAxNy4xIDQ4LjEtMTcuMUw5Ni41IDkxLjV6bTAtNzMuNGw0OC4xIDI1LTQ4LjEgMjUtNDguMS0yNXptMTIuOCA4Ny4zbDI3LjEgMTMuNSAyNy4xLTEzLjUtMjcuMS01NS4xek0xOTMgOTIuOGw0Ny45IDI1LjItNDcuOS0yNS4yek0xOTMgNjUuNEw5Ni40IDIxMy4xbDI1LjQtOTAuNnoiLz48L3N2Zz4=',
                 rdns: 'io.metamask.legacy',
               },
               provider: window.ethereum,
             };
-            // Add the legacy wallet to the start of the list for prominence
             return [legacyWallet, ...currentWallets];
           }
           return currentWallets;

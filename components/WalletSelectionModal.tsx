@@ -52,10 +52,10 @@ const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({
         <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
           {wallets.length === 0 && !isConnecting ? (
             <p className="text-text-secondary text-center py-4">
-              No wallet providers detected. Please install a browser wallet extension.
+              No supported wallet providers detected. Please install MetaMask, Base Wallet, or another supported wallet.
             </p>
           ) : (
-            wallets.slice(0, 4).map(wallet => (
+            wallets.map(wallet => (
               <button
                 key={wallet.info.uuid}
                 onClick={() => onSelectWallet(wallet)}
