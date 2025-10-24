@@ -15,18 +15,17 @@ const App: React.FC = () => {
   const [isLoadingTokens, setIsLoadingTokens] = useState(true);
   const [tokensError, setTokensError] = useState<string | null>(null);
   const [baseFee, setBaseFee] = useState<string | null>(null);
-  
+
   const [availableWallets, setAvailableWallets] = useState<EIP6963ProviderDetail[]>([]);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
-  // Initialize read-only provider
+  // Initialize read-only provider and listen for EIP-6963 wallets
   useEffect(() => {
     const provider = new JsonRpcProvider('https://base.publicnode.com', 8453);
     setReadOnlyProvider(provider);
 
-    // Listen for EIP-6963 wallets
     const onAnnounceProvider = (event: EIP6963AnnounceProviderEvent) => {
       setAvailableWallets(prev => {
         if (prev.some(p => p.info.uuid === event.detail.info.uuid)) return prev;
@@ -35,7 +34,13 @@ const App: React.FC = () => {
     };
 
     window.addEventListener('eip6963:announceProvider', onAnnounceProvider);
-    window.dispatchEvent(new Event('eip6963:requestProvider'));
+
+    // Request providers without redefining window.ethereum
+    try {
+      window.dispatchEvent(new Event('eip6963:requestProvider'));
+    } catch (err) {
+      console.warn('EIP-6963 requestProvider failed', err);
+    }
 
     return () => {
       window.removeEventListener('eip6963:announceProvider', onAnnounceProvider);
@@ -51,7 +56,7 @@ const App: React.FC = () => {
       const signer = await newProvider.getSigner();
       const address = await signer.getAddress();
 
-      // Optional: signature to prove ownership
+      // Optional signature to prove ownership
       const nonce = new Date().getTime().toString();
       const message = `Sign this message to connect your wallet securely. Nonce: ${nonce}`;
       await signer.signMessage(message);
