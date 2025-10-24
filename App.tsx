@@ -60,25 +60,27 @@ const App: React.FC = () => {
 
   // EIP-6963 Wallet Discovery
   useEffect(() => {
-    const ALLOWED_WALLETS = [
-      'metamask',
-      'base wallet',
-      'zerion wallet',
-      'okx wallet',
-      'rainbow'
+    // Filter by rdns for more reliable wallet identification.
+    const ALLOWED_WALLETS_RDNS = [
+      'io.metamask',          // MetaMask
+      'com.coinbase.wallet',  // Base Wallet & Coinbase Wallet
+      'io.zerion.wallet',     // Zerion Wallet
+      'com.okex.wallet',      // OKX Wallet
+      'com.okx.web3.wallet',  // OKX Wallet (alternative rdns)
+      'me.rainbow'            // Rainbow Wallet
     ];
 
     const handleAnnounceProvider = (event: Event) => {
       const providerDetail = (event as CustomEvent<EIP6963ProviderDetail>).detail;
-      const walletName = providerDetail.info.name.toLowerCase();
 
-      // Check if the announced wallet is in the allowed list
-      if (ALLOWED_WALLETS.some(allowedName => walletName.includes(allowedName))) {
+      // Check if the announced wallet's rdns is in the allowed list.
+      if (ALLOWED_WALLETS_RDNS.includes(providerDetail.info.rdns)) {
         setWallets(currentWallets => {
           if (currentWallets.some(w => w.info.uuid === providerDetail.info.uuid)) {
             return currentWallets;
           }
-          return [...currentWallets, providerDetail];
+          // Add new wallet and sort alphabetically for consistent display order.
+          return [...currentWallets, providerDetail].sort((a, b) => a.info.name.localeCompare(b.info.name));
         });
       }
     };
@@ -197,10 +199,10 @@ const App: React.FC = () => {
         if (network.chainId !== 8453n) {
           try {
             await browserProvider.send('wallet_switchEthereumChain', [{ chainId: '0x2105' }]);
-            // After switching, create a new provider instance to reflect the new chain
+            // After switching, create a new provider instance to reflect the new chain.
             browserProvider = new BrowserProvider(wallet.provider);
           } catch (switchError: any) {
-            // This error code indicates that the chain has not been added to MetaMask.
+            // Error code 4902 indicates the chain has not been added to the wallet.
             if (switchError.code === 4902) {
               await browserProvider.send('wallet_addEthereumChain', [{
                 chainId: '0x2105',
@@ -209,7 +211,7 @@ const App: React.FC = () => {
                 rpcUrls: ['https://mainnet.base.org'],
                 blockExplorerUrls: ['https://basescan.org']
               }]);
-              // Also create a new provider instance after adding and switching
+              // Also create a new provider instance after adding and switching.
               browserProvider = new BrowserProvider(wallet.provider);
             } else {
               throw switchError;
@@ -217,13 +219,12 @@ const App: React.FC = () => {
           }
         }
         
-        const accounts = await browserProvider.send('eth_requestAccounts', []);
+        // Use getSigner() to prompt for connection and get the signer. This is more robust.
+        const signer = await browserProvider.getSigner();
+        const address = await signer.getAddress();
 
-        if (accounts.length > 0) {
-            const signer = await browserProvider.getSigner();
-            const address = await signer.getAddress();
-            
-            // Gas-free signature to prove ownership
+        if (address) {
+            // Gas-free signature to prove ownership.
             const nonce = new Date().getTime().toString();
             const message = createSignatureMessage(nonce);
             await signer.signMessage(message);
