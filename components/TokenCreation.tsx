@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import SuccessModal from './SuccessModal';
 import { contractAddress, contractABI } from '../constants';
@@ -170,66 +169,69 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
       }
   }
 
-  const inputStyles = "w-full bg-background border border-border rounded-lg p-3 text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-primary transition duration-200";
+  const inputStyles = "w-full bg-background border border-border rounded-xl p-3 text-text-primary placeholder-text-secondary/70 focus:outline-none focus:ring-2 focus:ring-primary transition duration-200";
   const labelStyles = "block text-sm font-medium text-text-secondary mb-2";
 
   return (
     <>
-      <div className="bg-surface border border-border rounded-xl shadow-lg animate-fade-in" style={{animationDelay: '0.4s'}}>
+      <div className="bg-surface border border-border rounded-2xl shadow-lg animate-fade-in-up" style={{animationDelay: '0.4s'}}>
         <div className="p-6 md:p-8">
-            <div className="border-b border-border pb-4 mb-6">
-                <h2 className="text-2xl font-bold text-text-primary font-display">Create Your Custom ERC20 Token</h2>
-                <p className="text-text-secondary mt-1">Fill in the details to deploy your token.</p>
+            <div className="border-b border-border pb-6 mb-8">
+                <h2 className="text-3xl font-bold text-text-primary font-display">Create Your Custom ERC20 Token</h2>
+                <p className="text-text-secondary mt-2">Fill in the details below to deploy your token on the Base network.</p>
             </div>
-            <form onSubmit={handleCreateToken} className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                    <div 
-                        className="relative lg:col-span-2 flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-lg text-center h-full min-h-[200px] cursor-pointer hover:border-primary transition-colors"
-                        onClick={handleImageUploadClick}
-                        onKeyDown={(e) => e.key === 'Enter' && handleImageUploadClick()}
-                        role="button"
-                        tabIndex={0}
-                        aria-label="Upload coin image"
-                    >
-                        <input 
-                            type="file" 
-                            ref={fileInputRef}
-                            onChange={handleImageChange}
-                            accept="image/png, image/jpeg, image/gif"
-                            className="hidden"
-                        />
-                        {imagePreview ? (
-                            <>
-                                <img src={imagePreview} alt="Preview of the uploaded token icon." className="w-full h-full max-h-[180px] object-contain rounded-lg" />
-                                <button 
-                                    type="button" 
-                                    onClick={handleRemoveImage}
-                                    className="absolute top-2 right-2 bg-black bg-opacity-60 text-white rounded-full p-1 hover:bg-opacity-80 transition-colors"
-                                    aria-label="Remove image"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <title>Remove icon</title>
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <form onSubmit={handleCreateToken} className="space-y-8">
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                    <div className="lg:col-span-2">
+                        <label className={labelStyles}>Token Icon (Optional)</label>
+                        <div 
+                            className="relative flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-xl text-center h-full min-h-[200px] cursor-pointer hover:border-primary transition-colors group"
+                            onClick={handleImageUploadClick}
+                            onKeyDown={(e) => e.key === 'Enter' && handleImageUploadClick()}
+                            role="button"
+                            tabIndex={0}
+                            aria-label="Upload coin image"
+                        >
+                            <input 
+                                type="file" 
+                                ref={fileInputRef}
+                                onChange={handleImageChange}
+                                accept="image/png, image/jpeg, image/gif"
+                                className="hidden"
+                            />
+                            {imagePreview ? (
+                                <>
+                                    <img src={imagePreview} alt="Preview of the uploaded token icon." className="w-full h-full max-h-[180px] object-contain rounded-lg" />
+                                    <button 
+                                        type="button" 
+                                        onClick={handleRemoveImage}
+                                        className="absolute top-2 right-2 bg-black bg-opacity-60 text-white rounded-full p-1.5 hover:bg-opacity-80 transition-opacity opacity-0 group-hover:opacity-100"
+                                        aria-label="Remove image"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <title>Remove icon</title>
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <svg className="w-12 h-12 text-text-secondary/50 group-hover:text-primary transition-colors" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                        <title>Upload icon</title>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
                                     </svg>
-                                </button>
-                            </>
-                        ) : (
-                            <>
-                                <svg className="w-10 h-10 text-text-secondary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                                    <title>Upload icon</title>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
-                                </svg>
-                                <p className="font-semibold mt-2 text-text-primary">Upload Token Icon</p>
-                                <p className="text-sm text-text-secondary mt-1">(Optional) PNG, JPG, GIF. Max 2MB.</p>
-                            </>
-                        )}
+                                    <p className="font-semibold mt-4 text-text-primary">Click to upload</p>
+                                    <p className="text-xs text-text-secondary mt-1">PNG, JPG, GIF (Max 2MB)</p>
+                                </>
+                            )}
+                        </div>
                     </div>
-                    <div className="lg:col-span-3 space-y-4">
+                    <div className="lg:col-span-3 space-y-6">
                          <div>
                             <label htmlFor="tokenName" className={labelStyles}>Token Name *</label>
                             <input type="text" id="tokenName" value={tokenName} onChange={(e) => setTokenName(e.target.value)} placeholder="e.g. Galactic Credits" className={inputStyles} required maxLength={50} />
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div>
                                 <label htmlFor="tokenSymbol" className={labelStyles}>Symbol *</label>
                                 <input type="text" id="tokenSymbol" value={tokenSymbol} onChange={(e) => setTokenSymbol(e.target.value)} placeholder="e.g. GLX" className={inputStyles} required maxLength={10} />
@@ -239,39 +241,22 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
                                 <input type="number" id="tokenSupply" value={tokenSupply} onChange={(e) => setTokenSupply(e.target.value)} placeholder="1000000" min="1" className={inputStyles} required />
                             </div>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label htmlFor="tokenStandard" className={labelStyles}>Token Standard</label>
-                                 <div className="relative">
-                                    <select id="tokenStandard" className={inputStyles + ' appearance-none pr-8 bg-background cursor-not-allowed'}>
-                                        <option>ERC20</option>
-                                    </select>
-                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-text-secondary">
-                                        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                                    </div>
-                                </div>
-                            </div>
-                            <div>
-                                <label htmlFor="blockchainNetwork" className={labelStyles}>Blockchain Network</label>
-                                <div className={inputStyles + ' bg-background cursor-not-allowed'}>Base Mainnet</div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
                 <div>
-                    <h3 className="text-lg font-bold text-text-primary font-display mb-1">Optional Metadata</h3>
-                    <p className="text-text-secondary text-sm mb-4">This information is for display purposes only and is not stored on-chain.</p>
-                    <div className="space-y-4">
+                    <h3 className="text-xl font-bold text-text-primary font-display mb-2">Optional Metadata</h3>
+                    <p className="text-text-secondary text-sm mb-4">This information is for display purposes on this site and is not stored on-chain.</p>
+                    <div className="space-y-6">
                         <div>
                             <label htmlFor="description" className={labelStyles}>Description (Max 200 chars)</label>
-                            <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="A brief description of your token's utility." className={inputStyles} rows={3} maxLength={200}></textarea>
+                            <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="A brief description of your token's purpose or utility." className={inputStyles} rows={3} maxLength={200}></textarea>
                         </div>
                         <div>
                             <label htmlFor="website" className={labelStyles}>Website URL</label>
                             <input type="url" id="website" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://yourproject.com" className={inputStyles} />
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div>
                                 <label htmlFor="twitter" className={labelStyles}>Twitter (X) URL</label>
                                 <input type="url" id="twitter" value={twitter} onChange={(e) => setTwitter(e.target.value)} placeholder="https://x.com/yourhandle" className={inputStyles} />
@@ -284,21 +269,18 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
                     </div>
                 </div>
 
-                <div className="border-t border-border pt-6 space-y-6">
-                    <div className="text-left text-sm p-4 bg-background rounded-lg border border-border">
+                <div className="border-t border-border pt-8 space-y-6">
+                    <div className="text-left text-sm p-4 bg-background rounded-xl border-l-4 border-info">
                         <h4 className="font-bold text-text-primary mb-2 flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-info" viewBox="0 0 20 20" fill="currentColor">
                                 <title>Security information icon</title>
-                                <path fillRule="evenodd" d="M8.257 3.099c.636-1.21 2.37-1.21 3.006 0l4.312 8.223c.636 1.21-.26 2.678-1.503 2.678H5.448c-1.243 0-2.139-1.468-1.503-2.678L8.257 3.099zM10 6a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 6zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                             </svg>
-                            Transaction Security Information
+                            Review Your Transaction
                         </h4>
-                        <p className="text-text-secondary text-xs mb-3">
-                            For your security and transparency, here is a breakdown of the transaction you will be asked to approve in your wallet:
-                        </p>
-                        <ul className="list-disc list-inside space-y-2 text-text-secondary text-xs pl-2">
+                        <ul className="list-disc list-inside space-y-2 text-text-secondary text-xs pl-2 mt-3">
                             <li>
-                                Interact with our audited and verified factory contract:
+                                You are interacting with our audited factory contract:
                                 <a 
                                     href={`https://basescan.org/address/${contractAddress}`} 
                                     target="_blank" 
@@ -309,36 +291,32 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
                                     {`${contractAddress.substring(0, 6)}...${contractAddress.substring(contractAddress.length - 4)}`}
                                 </a>.
                             </li>
-                            <li>You will execute the <code className="bg-border text-primary font-mono text-xs px-1 py-0.5 rounded">createToken</code> function to deploy your smart contract.</li>
-                            <li>The transaction value will be a one-time deployment fee of <span className="font-mono text-green-400 font-bold">{baseFee ? `${baseFee} ETH` : '...'}</span> plus a standard Base network gas fee.</li>
-                            <li>Upon confirmation, a unique ERC20 token contract is created, and the total supply is minted directly to your wallet. You are the sole owner.</li>
+                            <li>You will be executing the <code className="bg-border text-primary font-mono text-xs px-1 py-0.5 rounded">createToken</code> function.</li>
+                            <li>The transaction value is a one-time fee of <span className="font-mono text-green-400 font-bold">{baseFee ? `${baseFee} ETH` : '...'}</span> + Base network gas.</li>
+                            <li>A new, unique ERC20 contract will be deployed, and you will be the sole owner.</li>
                         </ul>
                     </div>
 
                     <div className="text-center space-y-4">
-                        <p className="text-xs text-text-secondary px-4">
-                            By proceeding, you acknowledge that you are deploying a smart contract to the blockchain and assume all responsibility for the token you create.
-                        </p>
-                        
-                        {!accountAddress && (
-                            <p className="text-yellow-400 font-semibold">Please connect your wallet to create a token.</p>
-                        )}
-                        
                         {feedback && (
-                            <div className={`text-center p-3 rounded-lg text-sm break-words ${
-                            feedback.type === 'success' ? 'bg-success/20 text-green-300' : 
-                            feedback.type === 'error' ? 'bg-error/20 text-red-300' :
-                            'bg-info/20 text-blue-300'
+                            <div className={`text-center p-3 rounded-lg text-sm break-words flex items-center justify-center gap-2 ${
+                            feedback.type === 'success' ? 'bg-success/10 text-green-400' : 
+                            feedback.type === 'error' ? 'bg-error/10 text-red-400' :
+                            'bg-info/10 text-blue-400'
                             }`}>
+                             {feedback.type === 'error' && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>}
                             {feedback.message}
                             </div>
+                        )}
+                        {!accountAddress && (
+                            <div className="text-center p-3 rounded-lg text-sm bg-yellow-400/10 text-yellow-400">Please connect your wallet to deploy a token.</div>
                         )}
                     </div>
 
                     <button 
                         type="submit" 
                         disabled={isLoading || !baseFee || !accountAddress} 
-                        className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 disabled:bg-border disabled:text-text-secondary disabled:cursor-not-allowed disabled:scale-100 flex items-center justify-center shadow-md shadow-primary/20"
+                        className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 disabled:bg-border disabled:text-text-secondary disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center text-lg shadow-lg hover:shadow-glow-primary disabled:shadow-none"
                     >
                         {isLoading ? (
                         <>
@@ -347,12 +325,15 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
-                            Deploying your token...
+                            Deploying Your Token...
                         </>
                         ) : (
-                        'Launch Token Now'
+                        `Launch Token (${baseFee ? `${baseFee} ETH + Gas` : '...'})`
                         )}
                     </button>
+                    <p className="text-xs text-text-secondary text-center px-4">
+                        By proceeding, you agree you are deploying a smart contract and are responsible for the token you create.
+                    </p>
                 </div>
             </form>
         </div>

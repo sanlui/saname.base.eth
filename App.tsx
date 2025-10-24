@@ -89,21 +89,23 @@ const App: React.FC = () => {
         const chunkSize = 20000;
         let allLogs: Log[] = [];
 
-        for (let fromBlock = 0; fromBlock <= latestBlockNumber; fromBlock += chunkSize) {
+        // Fetch logs in chunks to avoid provider limits
+        for (let fromBlock = Math.max(0, latestBlockNumber - 200000); fromBlock <= latestBlockNumber; fromBlock += chunkSize) {
             const toBlock = Math.min(fromBlock + chunkSize - 1, latestBlockNumber);
-            const logs = await contract.queryFilter(filter, fromBlock, toBlock);
-            allLogs = [...allLogs, ...logs];
+            try {
+              const logs = await contract.queryFilter(filter, fromBlock, toBlock);
+              allLogs = [...allLogs, ...logs];
+            } catch (chunkError) {
+              console.warn(`Failed to fetch logs for block range ${fromBlock}-${toBlock}. Skipping chunk.`, chunkError);
+            }
         }
         
         const tokenPromises = allLogs.map(async (log) => {
             const block = await readOnlyProvider.getBlock(log.blockNumber);
-            // The `log.args` are not guaranteed to be present directly on the Log object
-            // by some providers/ethers versions. It's safer to parse the log.
             const parsedLog = contract.interface.parseLog({ topics: log.topics as string[], data: log.data });
             const args = parsedLog!.args;
 
             const tokenAddress = args.tokenAddress;
-
             const localMeta = localMetadata[tokenAddress.toLowerCase()] || {};
             
             return {
@@ -199,35 +201,32 @@ const App: React.FC = () => {
   };
   
   const handleScrollToCreation = () => {
-    creationSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+    creationSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
   
   return (
     <div className="flex flex-col min-h-screen">
       <Header onConnectWallet={handleConnectWallet} accountAddress={accountAddress} onDisconnect={handleDisconnect} />
-      <main className="flex-grow container mx-auto px-4 py-8 md:py-12">
+      <main className="flex-grow container mx-auto px-4 py-12 md:py-20">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16 animate-fade-in">
-              <h1 className="text-4xl md:text-5xl font-extrabold font-display mb-4 leading-tight">
-                  <span className="bg-primary text-white px-3 py-1 rounded-md box-decoration-clone">Launch Your ERC20 Token on the Base Network</span>
+          <div className="text-center mb-20 animate-fade-in-up">
+              <h1 className="text-5xl md:text-7xl font-black font-display mb-6 leading-tight bg-gradient-to-r from-gradient-start to-gradient-end text-transparent bg-clip-text">
+                  Launch on Base. Instantly.
               </h1>
-              <p className="text-lg md:text-xl text-text-primary max-w-2xl mx-auto my-6">
-                  <span className="bg-primary text-white px-3 py-1 rounded-md box-decoration-clone">Secure. Simple. All Yours.</span>
-              </p>
-              <p className="text-base md:text-lg text-text-secondary max-w-3xl mx-auto">
+              <p className="text-lg md:text-xl text-text-secondary max-w-3xl mx-auto">
                 Our secure, no-code tool empowers you to deploy a custom ERC20 token in minutes. You get full ownership and control, all on the fast and low-cost Base network.
               </p>
               <button
                   onClick={handleScrollToCreation}
-                  className="mt-8 bg-primary hover:bg-primary-hover text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 shadow-lg shadow-primary/30"
+                  className="mt-10 bg-primary hover:bg-primary-hover text-white font-bold text-lg py-4 px-10 rounded-full transition-all duration-300 ease-in-out hover:shadow-glow-primary transform hover:-translate-y-1"
               >
-                  Start Creating
+                  Start Creating Your Token
               </button>
           </div>
           
           <Features />
 
-          <div ref={creationSectionRef} className="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-12 mt-16">
+          <div ref={creationSectionRef} className="grid grid-cols-1 lg:grid-cols-5 gap-10 my-16 pt-16">
             <div className="lg:col-span-3">
               <TokenCreation
                 accountAddress={accountAddress}

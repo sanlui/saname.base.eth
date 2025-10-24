@@ -25,23 +25,23 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         theme: {
           extend: {
             colors: {
-              'background': '#000000',
-              'surface': '#111111',
+              'background': '#050719',
+              'surface': '#101222',
               'primary': '#0052FF',
-              'primary-hover': '#3374FF',
-              'text-primary': '#FFFFFF',
-              'text-secondary': '#888888',
-              'border': '#222222',
-              'success': '#238636',
-              'error': '#DA3633',
-              'info': '#1F6FEB',
+              'primary-hover': '#2E6DFF',
+              'text-primary': '#F0F4F8',
+              'text-secondary': '#8A94A6',
+              'border': '#2A2C3D',
+              'success': '#16A34A',
+              'error': '#DC2626',
+              'info': '#2563EB',
               'green-400': '#4ADE80',
               'yellow-400': '#FACC15',
               'gradient-start': '#0052FF',
@@ -52,21 +52,36 @@
               display: ['Inter', 'sans-serif'],
             },
             boxShadow: {
-              'glow': '0 0 25px rgba(0, 82, 255, 0.3)',
+              'glow-primary': '0 0 20px rgba(0, 82, 255, 0.4)',
+              'glow-primary-lg': '0 0 35px rgba(0, 82, 255, 0.5)',
             },
             keyframes: {
-              fadeIn: {
-                '0%': { opacity: 0, transform: 'translateY(-10px)' },
+              fadeInUp: {
+                '0%': { opacity: 0, transform: 'translateY(20px)' },
                 '100%': { opacity: 1, transform: 'translateY(0)' },
+              },
+              pulseGlow: {
+                '0%, 100%': { boxShadow: '0 0 15px rgba(0, 82, 255, 0.3)' },
+                '50%': { boxShadow: '0 0 25px rgba(0, 82, 255, 0.6)' },
               }
             },
             animation: {
-              'fade-in': 'fadeIn 0.5s ease-out forwards',
+              'fade-in-up': 'fadeInUp 0.6s ease-out forwards',
+              'pulse-glow': 'pulseGlow 2s infinite ease-in-out',
             }
           }
         }
       }
     </script>
+    <style>
+      body {
+        background-color: #050719;
+        background-image: radial-gradient(circle at 20% 20%, rgba(0, 82, 255, 0.15) 0%, transparent 40%),
+                          radial-gradient(circle at 80% 90%, rgba(196, 47, 205, 0.1) 0%, transparent 40%);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+    </style>
   <script type="importmap">
 {
   "imports": {

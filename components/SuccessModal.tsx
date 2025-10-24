@@ -1,4 +1,3 @@
-
 import React from 'react';
 import type { Token } from '../types';
 import { ethers } from 'ethers';
@@ -19,21 +18,22 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, tokenDetai
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 transition-opacity duration-300 animate-fade-in"
+      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity duration-300 animate-fade-in-up"
       onClick={onClose}
     >
       <div
-        className="bg-surface border border-border rounded-xl shadow-2xl p-6 w-full max-w-lg m-4 transform transition-all duration-300"
+        className="bg-surface border border-border rounded-2xl shadow-glow-primary-lg p-6 w-full max-w-lg m-4 transform transition-all duration-300"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="text-center">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-success/20 mb-4">
-                <svg className="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" aria-hidden="true">
+            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-success/10 mb-4 border-2 border-success/30">
+                <svg className="h-8 w-8 text-success" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" aria-hidden="true">
+                    <title>Success Icon</title>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
             </div>
-          <h2 className="text-2xl font-bold text-text-primary font-display mb-2">Congratulations! Your Token is Live!</h2>
-          <p className="text-text-secondary mb-6">Your ERC20 token is now live on the Base network. It's time to share your project with the world!</p>
+          <h2 className="text-2xl font-bold text-text-primary font-display mb-2">Congratulations!</h2>
+          <p className="text-text-secondary mb-6">Your ERC20 token is now live on the Base network. Share it with the world!</p>
         </div>
 
         <div className="space-y-4 bg-background border border-border rounded-lg p-4 mb-6">
