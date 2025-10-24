@@ -55,7 +55,7 @@ const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({
               No wallet providers detected. Please install a browser wallet extension.
             </p>
           ) : (
-            wallets.map(wallet => (
+            wallets.slice(0, 4).map(wallet => (
               <button
                 key={wallet.info.uuid}
                 onClick={() => onSelectWallet(wallet)}
