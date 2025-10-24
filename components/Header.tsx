@@ -26,7 +26,7 @@ const Header: React.FC<HeaderProps> = ({ onConnectWallet, accountAddress, onDisc
   };
 
   return (
-    <header className="bg-surface/80 border-b border-border backdrop-blur-lg sticky top-0 z-40">
+    <header className="bg-background">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <h1
           className="text-xl sm:text-2xl font-bold text-text-primary font-display cursor-pointer"
@@ -36,7 +36,7 @@ const Header: React.FC<HeaderProps> = ({ onConnectWallet, accountAddress, onDisc
           tabIndex={0}
           aria-label="Go to top of page"
         >
-          <span className="bg-gradient-to-r from-gradient-start to-gradient-end bg-clip-text text-transparent">Disrole</span>
+          Disrole
         </h1>
         {accountAddress ? (
           <div className="flex items-center gap-3">

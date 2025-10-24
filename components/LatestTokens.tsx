@@ -191,11 +191,11 @@ const LatestTokens: React.FC<LatestTokensProps> = ({ tokens, isLoading, error, o
         <table className="w-full text-left min-h-[400px]">
           <thead className="border-b border-border text-text-secondary uppercase text-xs tracking-wider">
             <tr>
-              <th className="p-3">Token</th>
-              <th className="p-3">Creator</th>
-              <th className="p-3">Age</th>
-              <th className="p-3">Contract</th>
-              <th className="p-3">Links</th>
+              <th className="p-3">TOKEN</th>
+              <th className="p-3">CREATOR</th>
+              <th className="p-3">AGE</th>
+              <th className="p-3">CONTRACT</th>
+              <th className="p-3">LINKS</th>
             </tr>
           </thead>
           <tbody>

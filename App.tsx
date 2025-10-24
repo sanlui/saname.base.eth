@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import TokenCreation from './components/TokenCreation';
 import LatestTokens from './components/LatestTokens';
+import Features from './components/Features';
+import Footer from './components/Footer';
 import WalletSelectionModal from './components/WalletSelectionModal';
 import { contractAddress, contractABI } from './constants';
 import type { Token, EIP6963ProviderDetail } from './types';
@@ -190,38 +192,45 @@ const App: React.FC = () => {
     <div className="flex flex-col min-h-screen">
       <Header onConnectWallet={handleConnectWallet} accountAddress={accountAddress} onDisconnect={handleDisconnect} />
       <main className="flex-grow container mx-auto px-4 py-8 md:py-12">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12 animate-fade-in">
-            <h1 className="text-4xl md:text-6xl font-extrabold font-display mb-4">
-              Launch on <span className="bg-gradient-to-r from-gradient-start to-gradient-end bg-clip-text text-transparent">Base</span>, Instantly.
-            </h1>
-            <p className="text-lg md:text-xl text-text-secondary max-w-2xl mx-auto">
-              Create and deploy your own ERC20 token on the Base network with just a few clicks. No code, no complexity, full ownership.
-            </p>
-            <button
-              onClick={handleScrollToCreation}
-              className="mt-8 bg-primary hover:bg-primary-hover text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 shadow-lg shadow-primary/30"
-            >
-              Start Creating Now
-            </button>
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16 animate-fade-in">
+              <h1 className="text-4xl md:text-5xl font-extrabold font-display mb-4 leading-tight">
+                  <span className="bg-primary text-white px-3 py-1 rounded-md box-decoration-clone">Launch Your ERC20 Token on the Base Network</span>
+              </h1>
+              <p className="text-lg md:text-xl text-text-primary max-w-2xl mx-auto my-6">
+                  <span className="bg-primary text-white px-3 py-1 rounded-md box-decoration-clone">Secure. Simple. All Yours.</span>
+              </p>
+              <p className="text-base md:text-lg text-text-secondary max-w-3xl mx-auto">
+                Our secure, no-code tool empowers you to deploy a custom ERC20 token in minutes. You get full ownership and control, all on the fast and low-cost Base network.
+              </p>
+              <button
+                  onClick={handleScrollToCreation}
+                  className="mt-8 bg-primary hover:bg-primary-hover text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 shadow-lg shadow-primary/30"
+              >
+                  Start Creating
+              </button>
           </div>
           
-          <div ref={creationSectionRef} className="mb-12">
-            <TokenCreation
-              accountAddress={accountAddress}
-              provider={provider}
-              baseFee={baseFee}
-              onTokenCreated={handleTokenCreated}
-              onTokenCreatedWithMetadata={handleTokenCreatedWithMetadata}
-            />
-          </div>
-          
-          <div className="mb-12">
-            <LatestTokens tokens={tokens} isLoading={isLoadingTokens} error={tokensError} onRetry={fetchTokens} />
+          <Features />
+
+          <div ref={creationSectionRef} className="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-12 mt-16">
+            <div className="lg:col-span-3">
+              <TokenCreation
+                accountAddress={accountAddress}
+                provider={provider}
+                baseFee={baseFee}
+                onTokenCreated={handleTokenCreated}
+                onTokenCreatedWithMetadata={handleTokenCreatedWithMetadata}
+              />
+            </div>
+            <div className="lg:col-span-2">
+              <LatestTokens tokens={tokens} isLoading={isLoadingTokens} error={tokensError} onRetry={fetchTokens} />
+            </div>
           </div>
 
         </div>
       </main>
+      <Footer />
       <WalletSelectionModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
