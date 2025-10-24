@@ -1,4 +1,5 @@
 import React from 'react';
+import ThemeToggle from './ThemeToggle';
 
 interface HeaderProps {
   onConnectWallet: () => void;
@@ -42,32 +43,35 @@ const Header: React.FC<HeaderProps> = ({ onConnectWallet, accountAddress, onDisc
             </svg>
           Disrole
         </div>
-        {accountAddress ? (
-          <div className="flex items-center gap-3">
-            <div className="bg-surface border border-border text-text-secondary font-mono text-sm py-2 px-4 rounded-full flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-400"></span>
-              {abbreviateAddress(accountAddress)}
+        <div className="flex items-center gap-4">
+          <ThemeToggle />
+          {accountAddress ? (
+            <div className="flex items-center gap-3">
+              <div className="bg-surface border border-border text-text-secondary font-mono text-sm py-2 px-4 rounded-full flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-green-400"></span>
+                {abbreviateAddress(accountAddress)}
+              </div>
+              <button
+                onClick={onDisconnect}
+                className="text-text-secondary hover:text-error transition-colors p-1.5 rounded-full hover:bg-error/10"
+                title="Disconnect wallet"
+                aria-label="Disconnect wallet"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <title>Disconnect wallet icon</title>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
             </div>
+          ) : (
             <button
-              onClick={onDisconnect}
-              className="text-text-secondary hover:text-error transition-colors p-1.5 rounded-full hover:bg-error/10"
-              title="Disconnect wallet"
-              aria-label="Disconnect wallet"
+              onClick={onConnectWallet}
+              className="bg-primary hover:bg-primary-hover text-white font-bold py-2 px-5 rounded-full transition-all duration-300 ease-in-out transform hover:-translate-y-0.5 text-sm sm:text-base"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <title>Disconnect wallet icon</title>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
+              Connect Wallet
             </button>
-          </div>
-        ) : (
-          <button
-            onClick={onConnectWallet}
-            className="bg-primary hover:bg-primary-hover text-white font-bold py-2 px-5 rounded-full transition-all duration-300 ease-in-out transform hover:-translate-y-0.5 text-sm sm:text-base"
-          >
-            Connect Wallet
-          </button>
-        )}
+          )}
+        </div>
       </div>
     </header>
   );

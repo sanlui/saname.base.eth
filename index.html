@@ -26,34 +26,43 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+      // Avoids FOUC (Flash of Unstyled Content) by applying theme before page load
+      if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
+        darkMode: 'class',
         theme: {
           extend: {
             colors: {
-              'background': '#050719',
-              'surface': '#101222',
-              'primary': '#0052FF',
-              'primary-hover': '#2E6DFF',
-              'text-primary': '#F0F4F8',
-              'text-secondary': '#8A94A6',
-              'border': '#2A2C3D',
+              'background': 'var(--color-background)',
+              'surface': 'var(--color-surface)',
+              'primary': 'var(--color-primary)',
+              'primary-hover': 'var(--color-primary-hover)',
+              'text-primary': 'var(--color-text-primary)',
+              'text-secondary': 'var(--color-text-secondary)',
+              'border': 'var(--color-border)',
               'success': '#16A34A',
               'error': '#DC2626',
               'info': '#2563EB',
               'green-400': '#4ADE80',
               'yellow-400': '#FACC15',
-              'gradient-start': '#0052FF',
-              'gradient-end': '#C42FCD',
+              'gradient-start': 'var(--color-gradient-start)',
+              'gradient-end': 'var(--color-gradient-end)',
             },
             fontFamily: {
               sans: ['Inter', 'sans-serif'],
               display: ['Inter', 'sans-serif'],
             },
             boxShadow: {
-              'glow-primary': '0 0 20px rgba(0, 82, 255, 0.4)',
-              'glow-primary-lg': '0 0 35px rgba(0, 82, 255, 0.5)',
+              'glow-primary': '0 0 20px var(--glow-primary-color)',
+              'glow-primary-lg': '0 0 35px var(--glow-primary-color-lg)',
             },
             keyframes: {
               fadeInUp: {
@@ -61,8 +70,8 @@
                 '100%': { opacity: 1, transform: 'translateY(0)' },
               },
               pulseGlow: {
-                '0%, 100%': { boxShadow: '0 0 15px rgba(0, 82, 255, 0.3)' },
-                '50%': { boxShadow: '0 0 25px rgba(0, 82, 255, 0.6)' },
+                '0%, 100%': { boxShadow: '0 0 15px var(--glow-primary-color)' },
+                '50%': { boxShadow: '0 0 25px var(--glow-primary-color-lg)' },
               }
             },
             animation: {
@@ -74,12 +83,43 @@
       }
     </script>
     <style>
+      :root {
+        --color-background: #F0F4F8;
+        --color-surface: #FFFFFF;
+        --color-primary: #0052FF;
+        --color-primary-hover: #2E6DFF;
+        --color-text-primary: #050719;
+        --color-text-secondary: #5A6476;
+        --color-border: #DDE1E6;
+        --color-gradient-start: #0052FF;
+        --color-gradient-end: #6A2FCD;
+        --glow-primary-color: rgba(0, 82, 255, 0.3);
+        --glow-primary-color-lg: rgba(0, 82, 255, 0.4);
+      }
+      .dark {
+        --color-background: #050719;
+        --color-surface: #101222;
+        --color-primary: #0052FF;
+        --color-primary-hover: #2E6DFF;
+        --color-text-primary: #F0F4F8;
+        --color-text-secondary: #8A94A6;
+        --color-border: #2A2C3D;
+        --color-gradient-start: #0052FF;
+        --color-gradient-end: #C42FCD;
+        --glow-primary-color: rgba(0, 82, 255, 0.4);
+        --glow-primary-color-lg: rgba(0, 82, 255, 0.5);
+      }
       body {
-        background-color: #050719;
-        background-image: radial-gradient(circle at 20% 20%, rgba(0, 82, 255, 0.15) 0%, transparent 40%),
-                          radial-gradient(circle at 80% 90%, rgba(196, 47, 205, 0.1) 0%, transparent 40%);
+        background-color: var(--color-background);
+        background-image: radial-gradient(circle at 20% 20%, rgba(0, 82, 255, 0.08) 0%, transparent 40%),
+                          radial-gradient(circle at 80% 90%, rgba(106, 47, 205, 0.06) 0%, transparent 40%);
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+        transition: background-color 0.3s ease-in-out;
+      }
+      .dark body {
+        background-image: radial-gradient(circle at 20% 20%, rgba(0, 82, 255, 0.15) 0%, transparent 40%),
+                          radial-gradient(circle at 80% 90%, rgba(196, 47, 205, 0.1) 0%, transparent 40%);
       }
     </style>
   <script type="importmap">
