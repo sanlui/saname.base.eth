@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Token } from '../types';
 import Card from './Card';
+import UserBadge from './UserBadge';
 
 interface LatestTokensProps {
   tokens: Token[];
@@ -89,13 +90,16 @@ const LatestTokens: React.FC<LatestTokensProps> = ({ tokens, isLoading, error, o
                 <div className="text-xs text-text-secondary">{token.symbol}</div>
             </td>
               <td className="p-3 font-mono text-xs">
-                {token.creator && token.creator !== 'N/A' ? (
-                  <a href={`https://basescan.org/address/${token.creator}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                  {abbreviateAddress(token.creator)}
-                </a>
-                ) : (
-                  <span className="text-text-secondary">N/A</span>
-                )}
+                 <div className="flex items-center gap-2">
+                  {token.creator && token.creator !== 'N/A' ? (
+                    <a href={`https://basescan.org/address/${token.creator}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                    {abbreviateAddress(token.creator)}
+                  </a>
+                  ) : (
+                    <span className="text-text-secondary">N/A</span>
+                  )}
+                  {token.badge && <UserBadge badge={token.badge} />}
+                </div>
             </td>
             <td className="p-3 text-xs text-text-secondary">
               {timeAgo(token.timestamp)}

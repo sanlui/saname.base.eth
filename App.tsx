@@ -65,6 +65,7 @@ const App: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [localMetadata, setLocalMetadata] = useState<Record<string, Partial<Token>>>({});
+  const [userBadge, setUserBadge] = useState<string | null>(null);
 
   const creationSectionRef = useRef<HTMLDivElement>(null);
 
@@ -120,6 +121,22 @@ const App: React.FC = () => {
     }
   }, [readOnlyProvider]);
 
+  const fetchUserBadge = useCallback(async (address: string) => {
+    if (!readOnlyProvider) return;
+    try {
+      const contract = new Contract(contractAddress, contractABI, readOnlyProvider);
+      const badge = await contract.getBadge(address);
+      if (badge) {
+        setUserBadge(badge);
+      } else {
+        setUserBadge(null);
+      }
+    } catch (error) {
+      console.warn(`Could not fetch badge for ${address}:`, error);
+      setUserBadge(null);
+    }
+  }, [readOnlyProvider]);
+
   const fetchTokens = useCallback(async () => {
     if (!readOnlyProvider) return;
     setIsLoadingTokens(true);
@@ -151,6 +168,15 @@ const App: React.FC = () => {
             const tokenAddress = args.tokenAddress;
             const localMeta = localMetadata[tokenAddress.toLowerCase()] || {};
             
+            // Fetch badge for each creator
+            let badge;
+            try {
+                badge = await contract.getBadge(args.creator);
+            } catch (badgeError) {
+                console.warn(`Could not fetch badge for creator ${args.creator}:`, badgeError);
+                badge = undefined;
+            }
+
             return {
                 name: args.name,
                 symbol: args.symbol,
@@ -164,6 +190,7 @@ const App: React.FC = () => {
                 twitter: localMeta.twitter,
                 telegram: localMeta.telegram,
                 description: localMeta.description,
+                badge: badge || undefined,
             };
         });
 
@@ -184,6 +211,9 @@ const App: React.FC = () => {
 
   const handleTokenCreated = () => {
     fetchTokens();
+    if (accountAddress) {
+        fetchUserBadge(accountAddress);
+    }
   };
 
   const handleTokenCreatedWithMetadata = (token: Token) => {
@@ -248,6 +278,7 @@ const App: React.FC = () => {
 
             setAccountAddress(address);
             setProvider(browserProvider);
+            fetchUserBadge(address);
             setIsModalOpen(false);
         } else {
             setConnectionError("No accounts found. Please make sure your wallet is unlocked and accessible.");
@@ -267,6 +298,7 @@ const App: React.FC = () => {
   const handleDisconnect = () => {
     setAccountAddress(null);
     setProvider(null);
+    setUserBadge(null);
   };
   
   const handleScrollToCreation = () => {
@@ -299,7 +331,7 @@ const App: React.FC = () => {
   
   return (
     <div className="flex flex-col min-h-screen">
-      <Header onConnectWallet={handleConnectWallet} accountAddress={accountAddress} onDisconnect={handleDisconnect} />
+      <Header onConnectWallet={handleConnectWallet} accountAddress={accountAddress} onDisconnect={handleDisconnect} userBadge={userBadge} />
       <main className="flex-grow container mx-auto px-4 py-12 md:py-20">
         <motion.div 
           className="max-w-7xl mx-auto"

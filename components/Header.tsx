@@ -1,13 +1,15 @@
 import React from 'react';
 import ThemeToggle from './ThemeToggle';
+import UserBadge from './UserBadge';
 
 interface HeaderProps {
   onConnectWallet: () => void;
   accountAddress: string | null;
   onDisconnect: () => void;
+  userBadge: string | null;
 }
 
-const Header: React.FC<HeaderProps> = ({ onConnectWallet, accountAddress, onDisconnect }) => {
+const Header: React.FC<HeaderProps> = ({ onConnectWallet, accountAddress, onDisconnect, userBadge }) => {
   const abbreviateAddress = (address: string) => {
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
   };
@@ -43,6 +45,7 @@ const Header: React.FC<HeaderProps> = ({ onConnectWallet, accountAddress, onDisc
           <ThemeToggle />
           {accountAddress ? (
             <div className="flex items-center gap-3">
+              {userBadge && <UserBadge badge={userBadge} />}
               <div className="bg-surface border border-border text-text-secondary font-mono text-sm py-2 px-4 rounded-full flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-green-400"></span>
                 {abbreviateAddress(accountAddress)}

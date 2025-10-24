@@ -11,6 +11,7 @@ export interface Token {
   twitter?: string;
   telegram?: string;
   description?: string;
+  badge?: string;
 }
 
 export interface EIP6963ProviderInfo {
