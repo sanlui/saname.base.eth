@@ -1,12 +1,25 @@
-
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import TokenCreation from './components/TokenCreation';
 import LatestTokens from './components/LatestTokens';
 import WalletSelectionModal from './components/WalletSelectionModal';
-import { contractAddress, contractABI, erc20ABI } from './constants';
-import type { Token, EIP6963ProviderDetail, EIP6963AnnounceProviderEvent } from './types';
+import { contractAddress, contractABI } from './constants';
+import type { Token, EIP6963ProviderDetail } from './types';
 import { ethers, Contract, BrowserProvider, JsonRpcProvider } from 'ethers';
+
+// Announce that the app is ready to receive wallet provider info
+const announceProvider = () => {
+  try {
+    window.dispatchEvent(new Event('eip6963:requestProvider'));
+  } catch (error) {
+    console.error('Could not dispatch eip6963:requestProvider event.', error);
+  }
+};
+
+const createSignatureMessage = (nonce: string): string => {
+  return `Welcome to Disrole!\n\nPlease sign this message to securely connect your wallet. This action is free and will not trigger a transaction.\n\nNonce: ${nonce}`;
+};
+
 
 const App: React.FC = () => {
   const [accountAddress, setAccountAddress] = useState<string | null>(null);
@@ -16,218 +29,203 @@ const App: React.FC = () => {
   const [isLoadingTokens, setIsLoadingTokens] = useState(true);
   const [tokensError, setTokensError] = useState<string | null>(null);
   const [baseFee, setBaseFee] = useState<string | null>(null);
-  
-  const [availableWallets, setAvailableWallets] = useState<EIP6963ProviderDetail[]>([]);
-  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  
+  const [wallets, setWallets] = useState<EIP6963ProviderDetail[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [localMetadata, setLocalMetadata] = useState<Record<string, Partial<Token>>>({});
+
+  const creationSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const provider = new JsonRpcProvider('https://base.publicnode.com', 8453);
     setReadOnlyProvider(provider);
-    
-    const onAnnounceProvider = (event: EIP6963AnnounceProviderEvent) => {
-      setAvailableWallets(prev => {
-        if (prev.some(p => p.info.uuid === event.detail.info.uuid)) return prev;
-        return [...prev, event.detail];
+  }, []);
+
+  // EIP-6963 Wallet Discovery
+  useEffect(() => {
+    const handleAnnounceProvider = (event: any) => {
+      const providerDetail: EIP6963ProviderDetail = event.detail;
+      setWallets(currentWallets => {
+        if (currentWallets.some(w => w.info.uuid === providerDetail.info.uuid)) {
+          return currentWallets;
+        }
+        return [...currentWallets, providerDetail];
       });
     };
-    
-    window.addEventListener('eip6963:announceProvider', onAnnounceProvider);
-    window.dispatchEvent(new Event('eip6963:requestProvider'));
+
+    window.addEventListener('eip6963:announceProvider', handleAnnounceProvider);
+    announceProvider();
 
     return () => {
-      window.removeEventListener('eip6963:announceProvider', onAnnounceProvider);
+      window.removeEventListener('eip6963:announceProvider', handleAnnounceProvider);
     };
   }, []);
+  
+  const fetchBaseFee = useCallback(async () => {
+    if (!readOnlyProvider) return;
+    try {
+      const contract = new Contract(contractAddress, contractABI, readOnlyProvider);
+      const feeInWei = await contract.baseFee();
+      setBaseFee(ethers.formatEther(feeInWei));
+    } catch (error) {
+      console.error('Error fetching base fee:', error);
+      setTokensError('Could not retrieve the deployment fee from the contract.');
+    }
+  }, [readOnlyProvider]);
+
+  const fetchTokens = useCallback(async () => {
+    if (!readOnlyProvider) return;
+    setIsLoadingTokens(true);
+    setTokensError(null);
+    try {
+        const contract = new Contract(contractAddress, contractABI, readOnlyProvider);
+        const filter = contract.filters.TokenCreated();
+        const logs = await contract.queryFilter(filter, 0, 'latest');
+        
+        const tokenPromises = logs.map(async (log) => {
+            const block = await readOnlyProvider.getBlock(log.blockNumber);
+            const tokenAddress = log.args.tokenAddress;
+
+            const localMeta = localMetadata[tokenAddress.toLowerCase()] || {};
+            
+            return {
+                name: log.args.name,
+                symbol: log.args.symbol,
+                creator: log.args.creator,
+                address: tokenAddress,
+                supply: log.args.supply.toString(),
+                timestamp: block ? block.timestamp * 1000 : undefined,
+                txHash: log.transactionHash,
+                decimals: 18, // All tokens created have 18 decimals by default
+                website: localMeta.website,
+                twitter: localMeta.twitter,
+                telegram: localMeta.telegram,
+                description: localMeta.description,
+            };
+        });
+
+        const fetchedTokens = await Promise.all(tokenPromises);
+        setTokens(fetchedTokens.reverse());
+    } catch (error) {
+        console.error('Failed to fetch tokens:', error);
+        setTokensError("Could not connect to the blockchain to fetch the token list. The network may be congested. Please try again later.");
+    } finally {
+        setIsLoadingTokens(false);
+    }
+  }, [readOnlyProvider, localMetadata]);
+
+  useEffect(() => {
+    fetchBaseFee();
+    fetchTokens();
+  }, [fetchBaseFee, fetchTokens]);
+
+  const handleTokenCreated = () => {
+    fetchTokens();
+  };
+
+  const handleTokenCreatedWithMetadata = (token: Token) => {
+    setLocalMetadata(prev => ({
+      ...prev,
+      [token.address.toLowerCase()]: {
+        website: token.website,
+        twitter: token.twitter,
+        telegram: token.telegram,
+        description: token.description,
+      }
+    }));
+    // We don't need to call fetchTokens here, it will be called by handleTokenCreated
+  };
+
+  const handleConnectWallet = () => {
+    setIsModalOpen(true);
+    setConnectionError(null);
+  };
+  
+  const handleSelectWallet = async (wallet: EIP6963ProviderDetail) => {
+    setIsConnecting(true);
+    setConnectionError(null);
+    try {
+        const provider = new BrowserProvider(wallet.provider);
+        const accounts = await provider.send('eth_requestAccounts', []);
+
+        if (accounts.length > 0) {
+            const signer = await provider.getSigner();
+            const address = await signer.getAddress();
+            
+            // Gas-free signature to prove ownership
+            const nonce = new Date().getTime().toString();
+            const message = createSignatureMessage(nonce);
+            await signer.signMessage(message);
+
+            setAccountAddress(address);
+            setProvider(provider);
+            setIsModalOpen(false);
+        } else {
+            setConnectionError("No accounts found. Please make sure your wallet is unlocked and accessible.");
+        }
+    } catch (error: any) {
+        console.error("Wallet connection error:", error);
+        let message = "An error occurred while connecting. Please try again.";
+        if (error.code === 4001 || (error.message && error.message.toLowerCase().includes('user rejected'))) {
+          message = "Connection request cancelled in wallet.";
+        }
+        setConnectionError(message);
+    } finally {
+        setIsConnecting(false);
+    }
+  };
 
   const handleDisconnect = () => {
     setAccountAddress(null);
     setProvider(null);
   };
-
-  const handleConnectWallet = () => {
-    setIsWalletModalOpen(true);
-  };
-
-  const handleSelectWallet = async (wallet: EIP6963ProviderDetail) => {
-    setIsConnecting(true);
-    setConnectionError(null);
-    try {
-      const newProvider = new BrowserProvider(wallet.provider);
-      const signer = await newProvider.getSigner();
-      const address = await signer.getAddress();
-      setAccountAddress(address);
-      setProvider(newProvider);
-      setIsWalletModalOpen(false);
-    } catch (error) {
-      console.error("Error connecting to wallet:", error);
-      setConnectionError("Failed to connect wallet. Please try again or choose a different wallet.");
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
-  const handleCloseWalletModal = () => {
-    setIsWalletModalOpen(false);
-    setConnectionError(null);
-  };
-
-  const fetchTokensFromAllTokensArray = useCallback(async () => {
-    if (!readOnlyProvider) return;
-    
-    setIsLoadingTokens(true);
-    setTokensError(null);
-    try {
-        const contract = new Contract(contractAddress, contractABI, readOnlyProvider);
-
-        if (!baseFee) {
-            const fee = await contract.baseFee();
-            setBaseFee(ethers.formatEther(fee));
-        }
-
-        const totalTokensBigInt = await contract.totalTokensCreated();
-        const totalTokens = Number(totalTokensBigInt);
-        
-        const BATCH_SIZE = 50;
-        const fetchedTokens: Token[] = [];
-
-        for (let i = 0; i < totalTokens; i += BATCH_SIZE) {
-            const batchPromises: Promise<string>[] = [];
-            const end = Math.min(i + BATCH_SIZE, totalTokens);
-            for (let j = i; j < end; j++) {
-                batchPromises.push(contract.allTokens(j));
-            }
-            
-            const tokenAddresses = await Promise.all(batchPromises);
-            
-            const detailPromises = tokenAddresses.map(async (address: string): Promise<Token | null> => {
-                 try {
-                    const tokenContract = new Contract(address, erc20ABI, readOnlyProvider);
-                    const [name, symbol, supply] = await Promise.all([
-                        tokenContract.name(),
-                        tokenContract.symbol(),
-                        tokenContract.totalSupply(),
-                    ]);
-                    
-                    return {
-                        address,
-                        name,
-                        symbol,
-                        supply: supply.toString(),
-                        creator: 'N/A',
-                        timestamp: undefined,
-                    };
-                } catch (error) {
-                    console.error(`Error fetching details for token ${address}:`, error);
-                    return null;
-                }
-            });
-
-            const resolvedTokens = await Promise.all(detailPromises);
-            const validTokensInBatch = resolvedTokens.filter((t): t is Token => t !== null);
-            fetchedTokens.push(...validTokensInBatch);
-        }
-
-        const sortedTokens = fetchedTokens.reverse();
-        setTokens(sortedTokens);
-
-    } catch (error: any) {
-        console.error("Error fetching tokens from allTokens array:", error);
-        setTokensError(error.message || 'An unexpected error occurred. Please try again.');
-    } finally {
-        setIsLoadingTokens(false);
-    }
-}, [readOnlyProvider, baseFee]);
   
-  useEffect(() => {
-    if(readOnlyProvider) {
-      fetchTokensFromAllTokensArray();
-    }
-  }, [readOnlyProvider, fetchTokensFromAllTokensArray]);
-
-  useEffect(() => {
-    const handleAccountsChanged = (accounts: string[]) => {
-      if (accounts.length > 0) {
-        setAccountAddress(accounts[0]);
-      } else {
-        setAccountAddress(null);
-        setProvider(null);
-      }
-    };
-
-    if (provider?.provider.on) {
-        provider.provider.on('accountsChanged', handleAccountsChanged);
-    }
-
-    return () => {
-      if (provider?.provider.removeListener) {
-        provider.provider.removeListener('accountsChanged', handleAccountsChanged);
-      }
-    };
-  }, [provider]);
+  const handleScrollToCreation = () => {
+    creationSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
   
-  const onTokenCreated = useCallback(() => {
-    setTimeout(fetchTokensFromAllTokensArray, 1000);
-  }, [fetchTokensFromAllTokensArray]);
-
-  useEffect(() => {
-    if (!readOnlyProvider) return;
-    
-    const contract = new Contract(contractAddress, contractABI, readOnlyProvider);
-    
-    const handleNewToken = () => {
-      onTokenCreated();
-    };
-
-    contract.on('TokenCreated', handleNewToken);
-    
-    return () => {
-      contract.removeAllListeners('TokenCreated');
-    };
-  }, [readOnlyProvider, onTokenCreated]);
-
   return (
-    <div className="min-h-screen bg-background font-sans">
+    <div className="flex flex-col min-h-screen">
       <Header onConnectWallet={handleConnectWallet} accountAddress={accountAddress} onDisconnect={handleDisconnect} />
-      <main className="container mx-auto px-4 py-12 md:py-16">
-        <h1 className="text-4xl md:text-5xl font-bold text-center font-display mb-10 animate-fade-in">
-          <span className="bg-gradient-to-r from-gradient-start to-gradient-end bg-clip-text text-transparent">
-            Create Your Token on the Base Network
-          </span>
-        </h1>
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          <div className="lg:col-span-3">
-            <TokenCreation 
-              accountAddress={accountAddress} 
-              provider={provider} 
+      <main className="flex-grow container mx-auto px-4 py-8 md:py-12">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12 animate-fade-in">
+            <h1 className="text-4xl md:text-6xl font-extrabold font-display mb-4">
+              Launch on <span className="bg-gradient-to-r from-gradient-start to-gradient-end bg-clip-text text-transparent">Base</span>, Instantly.
+            </h1>
+            <p className="text-lg md:text-xl text-text-secondary max-w-2xl mx-auto">
+              Create and deploy your own ERC20 token on the Base network with just a few clicks. No code, no complexity, full ownership.
+            </p>
+            <button
+              onClick={handleScrollToCreation}
+              className="mt-8 bg-primary hover:bg-primary-hover text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 shadow-lg shadow-primary/30"
+            >
+              Start Creating Now
+            </button>
+          </div>
+          
+          <div ref={creationSectionRef} className="mb-12">
+            <TokenCreation
+              accountAddress={accountAddress}
+              provider={provider}
               baseFee={baseFee}
-              onTokenCreated={onTokenCreated}
+              onTokenCreated={handleTokenCreated}
+              onTokenCreatedWithMetadata={handleTokenCreatedWithMetadata}
             />
           </div>
-          <div className="lg:col-span-2">
-            <LatestTokens 
-              tokens={tokens} 
-              isLoading={isLoadingTokens} 
-              error={tokensError}
-              onRetry={fetchTokensFromAllTokensArray}
-            />
+          
+          <div className="mb-12">
+            <LatestTokens tokens={tokens} isLoading={isLoadingTokens} error={tokensError} onRetry={fetchTokens} />
           </div>
+
         </div>
       </main>
-      <footer className="text-center py-6 mt-8">
-        <p className="text-text-secondary text-sm">
-          Contract address: 
-          <a href={`https://basescan.org/address/${contractAddress}`} target="_blank" rel="noopener noreferrer" className="font-mono text-primary hover:underline ml-2">
-            {contractAddress}
-          </a>
-          <span className="text-green-500 ml-1 inline-block" title="Verified">✓</span>
-        </p>
-      </footer>
       <WalletSelectionModal
-        isOpen={isWalletModalOpen}
-        onClose={handleCloseWalletModal}
-        wallets={availableWallets}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        wallets={wallets}
         onSelectWallet={handleSelectWallet}
         isConnecting={isConnecting}
         error={connectionError}
