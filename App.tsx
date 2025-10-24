@@ -61,6 +61,7 @@ const App: React.FC = () => {
   // EIP-6963 Wallet Discovery
   useEffect(() => {
     const ALLOWED_WALLETS = [
+      'metamask',
       'base wallet',
       'zerion wallet',
       'okx wallet',
