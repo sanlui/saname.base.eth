@@ -17,9 +17,8 @@ const SunIcon = () => (
 const ThemeToggle: React.FC = () => {
   const [theme, setTheme] = useState(() => {
     if (typeof window !== 'undefined') {
-      if (localStorage.theme === 'dark') return 'dark';
-      if (localStorage.theme === 'light') return 'light';
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
+      // Default to light mode unless 'dark' is explicitly stored.
+      return localStorage.getItem('theme') === 'dark' ? 'dark' : 'light';
     }
     return 'light';
   });
