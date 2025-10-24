@@ -60,8 +60,40 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
       const supply = ethers.parseUnits(tokenSupply, decimals);
       const feeInWei = ethers.parseEther(baseFee || '0');
 
-      const tx = await contract.createToken(tokenName, tokenSymbol, supply, { value: feeInWei });
-      setFeedback({ type: 'info', message: `Transaction in progress... Waiting for confirmation.` });
+      // --- Pre-flight gas estimation and balance check ---
+      setFeedback({ type: 'info', message: 'Estimating transaction cost...' });
+      
+      const estimatedGas = await contract.createToken.estimateGas(tokenName, tokenSymbol, supply, { value: feeInWei });
+      
+      const feeData = await provider.getFeeData();
+      const gasPrice = feeData.gasPrice;
+
+      if (!gasPrice) {
+          throw new Error("Could not get current gas price from the network. Please try again.");
+      }
+
+      const estimatedGasCost = estimatedGas * gasPrice;
+      const totalCost = feeInWei + estimatedGasCost;
+      const balance = await provider.getBalance(accountAddress);
+
+      if (balance < totalCost) {
+          const formattedTotal = ethers.formatEther(totalCost).substring(0, 8);
+          const formattedBalance = ethers.formatEther(balance).substring(0, 8);
+          setFeedback({ type: 'error', message: `Insufficient funds. You need ~${formattedTotal} ETH for the fee and gas, but you only have ${formattedBalance} ETH.` });
+          setIsLoading(false);
+          return;
+      }
+      // --- End of pre-flight check ---
+
+      // Add a 20% buffer to the gas limit for safety
+      const gasLimitWithBuffer = (estimatedGas * 120n) / 100n; 
+      
+      const tx = await contract.createToken(tokenName, tokenSymbol, supply, { 
+        value: feeInWei,
+        gasLimit: gasLimitWithBuffer 
+      });
+
+      setFeedback({ type: 'info', message: `Transaction submitted... Waiting for confirmation.` });
       
       const receipt = await tx.wait();
       
@@ -115,11 +147,12 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
     } catch (error: any) {
       console.error("Error creating token:", error);
       let message = "An unexpected error occurred. Please try again or check the console for details.";
-      // Check for user rejection first
       if (error.code === 'ACTION_REJECTED' || (error.reason && error.reason.toLowerCase().includes('user rejected'))) {
           message = "Transaction cancelled in wallet.";
-      } else if (error.code === 'INSUFFICIENT_FUNDS' || (error.reason && error.reason.toLowerCase().includes('insufficient funds'))) {
-          message = "Transaction failed. Please ensure your wallet has enough ETH for the fee and gas costs.";
+      } else if (error.code === 'INSUFFICIENT_FUNDS') {
+          message = "Your balance is insufficient to cover the transaction fee and gas costs. Please top up your wallet.";
+      } else if (error.code === 'CALL_EXCEPTION' || (error.reason && error.reason.toLowerCase().includes('reverted'))) {
+        message = `The transaction would fail. This can happen if token details are invalid or contract conditions are not met. Reason: ${error.reason || 'Execution reverted'}.`;
       }
       setFeedback({ type: 'error', message });
     } finally {
