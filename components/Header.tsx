@@ -37,6 +37,10 @@ const Header: React.FC<HeaderProps> = ({ onConnectWallet, accountAddress, onDisc
           tabIndex={0}
           aria-label="Go to top of page"
         >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <title>Disrole logo icon</title>
+            <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+          </svg>
           Disrole
         </div>
         <div className="flex items-center gap-4">
