@@ -101,13 +101,13 @@ const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({
         )}
 
         <div className="mt-6 pt-6 border-t border-border">
-          <div className="text-left text-xs p-3 bg-background rounded-lg border-l-4 border-success/50 flex items-start gap-3">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-success flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <title>Security Shield Icon</title>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622a11.99 11.99 0 0 0-.598-3.75c-.343-.992-.794-1.933-1.316-2.786a11.959 11.959 0 0 1-2.086-2.223Z" />
+          <div className="text-left text-xs p-3 bg-background rounded-lg border-l-4 border-info/50 flex items-start gap-3">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-info flex-shrink-0 mt-px" viewBox="0 0 20 20" fill="currentColor">
+                  <title>Information icon</title>
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
               </svg>
               <p className="text-text-secondary">
-                  <strong>Secure & Gas-Free:</strong> To keep your wallet secure, we use a domain-bound signature. This proves you own the wallet and ensures your signature can <em>only</em> be used on <strong>{window.location.hostname}</strong>, protecting you from phishing attacks. This is a free, off-chain action.
+                  <strong>Phishing Protection:</strong> To ensure a secure connection, we require a signature that is cryptographically tied to this website's domain ({window.location.hostname}). This prevents misuse on malicious sites. This action is free and will not trigger a blockchain transaction.
               </p>
           </div>
         </div>

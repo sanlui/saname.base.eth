@@ -352,10 +352,7 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
                             <li>The transaction value is a one-time fee of <span className="font-mono text-green-400 font-bold">{baseFee ? `${baseFee} ETH` : '...'}</span> + Base network gas.</li>
                             <li>A new, unique ERC20 contract will be deployed, and you will be the sole owner.</li>
                             <li>
-                                <strong className="text-text-primary">User Responsibility:</strong> You are solely responsible for the token you create and must ensure it complies with all applicable laws and regulations.
-                            </li>
-                             <li>
-                                <strong className="text-text-primary">Platform Disclaimer:</strong> Disrole is a technology provider and is not liable for any assets created. We do not endorse or audit tokens.
+                                <span className="font-bold">You are responsible for the token you create.</span> Ensure it complies with all applicable laws and regulations.
                             </li>
                         </ul>
                     </div>
@@ -403,7 +400,7 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
                         )}
                     </motion.button>
                     <p className="text-xs text-text-secondary text-center px-4">
-                        By proceeding, you agree that you are deploying a public smart contract. <strong>Disrole is a technology provider and is not responsible for the tokens you create.</strong> You are solely responsible for ensuring your token's purpose, distribution, and marketing comply with all applicable laws and regulations.
+                        By proceeding, you acknowledge that you are deploying a public smart contract to the Base blockchain. You are solely responsible for the token you create, its purpose, and its compliance with all applicable laws.
                     </p>
                 </div>
             </form>
