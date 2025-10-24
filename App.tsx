@@ -312,7 +312,7 @@ const App: React.FC = () => {
                   Launch on Base. Instantly.
               </h1>
               <p className="text-lg md:text-xl text-text-secondary max-w-3xl mx-auto">
-                Our secure, no-code tool empowers you to deploy a custom ERC20 token in minutes. You get full ownership and control, all on the fast and low-cost Base network.
+                Our secure, no-code platform lets you deploy your custom token in minutes, giving you full ownership and control on the fast, low-cost Base network.
               </p>
               <motion.button
                   onClick={handleScrollToCreation}
