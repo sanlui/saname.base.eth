@@ -34,6 +34,12 @@ const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({
             <button onClick={onClose} className="text-text-secondary hover:text-text-primary text-3xl leading-none">&times;</button>
         </div>
 
+        {wallets.length > 1 && (
+          <div className="text-xs text-center p-3 mb-4 rounded-lg bg-info/10 text-blue-300 animate-fade-in-up">
+            Multiple wallets detected. Please choose your preferred wallet to continue.
+          </div>
+        )}
+
         <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
           {wallets.length === 0 && !isConnecting ? (
             <p className="text-text-secondary text-center py-4">
