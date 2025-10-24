@@ -380,8 +380,7 @@ const TokenCreation: React.FC<TokenCreationProps> = ({ accountAddress, provider,
                     <motion.button 
                         type="submit" 
                         disabled={isLoading || !baseFee || !accountAddress} 
-                        className="w-full bg-primary text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 ease-in-out disabled:bg-border disabled:text-text-secondary disabled:cursor-not-allowed flex items-center justify-center text-lg shadow-lg disabled:shadow-none"
-                        whileHover={{ y: isLoading ? 0 : -2, boxShadow: isLoading ? 'none' : '0 0 20px var(--glow-primary-color)' }}
+                        className="w-full bg-primary text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center text-lg shadow-lg shadow-primary/20 transition-all duration-300 hover:bg-primary-hover hover:shadow-glow-primary hover:-translate-y-px disabled:bg-border disabled:text-text-secondary disabled:cursor-not-allowed disabled:shadow-none disabled:transform-none"
                         whileTap={{ scale: isLoading ? 1 : 0.98 }}
                     >
                         {isLoading ? (
