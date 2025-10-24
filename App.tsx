@@ -1,52 +1,32 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import TokenCreation from './components/TokenCreation';
 import LatestTokens from './components/LatestTokens';
 import WalletSelectionModal from './components/WalletSelectionModal';
 import { contractAddress, contractABI, erc20ABI } from './constants';
 import type { Token, EIP6963ProviderDetail, EIP6963AnnounceProviderEvent } from './types';
-import { ethers, Contract, BrowserProvider, JsonRpcProvider, Log } from 'ethers';
-
-// --- Messaggio per firma gas-free ---
-const createSignatureMessage = (nonce: string): string => {
-  return `Welcome to Disrole!\n\nPlease sign this message to securely connect your wallet. This action is free and will not trigger a transaction.\n\nNonce: ${nonce}`;
-};
-
-// --- Annuncio provider EIP-6963 ---
-const announceProvider = () => {
-  try {
-    window.dispatchEvent(new Event('eip6963:requestProvider'));
-  } catch (error) {
-    console.error('Could not dispatch eip6963:requestProvider event.', error);
-  }
-};
+import { ethers, Contract, BrowserProvider, JsonRpcProvider } from 'ethers';
 
 const App: React.FC = () => {
-  // --- Stato wallet ---
   const [accountAddress, setAccountAddress] = useState<string | null>(null);
   const [provider, setProvider] = useState<BrowserProvider | null>(null);
   const [readOnlyProvider, setReadOnlyProvider] = useState<JsonRpcProvider | null>(null);
-
-  // --- Stato token ---
   const [tokens, setTokens] = useState<Token[]>([]);
   const [isLoadingTokens, setIsLoadingTokens] = useState(true);
   const [tokensError, setTokensError] = useState<string | null>(null);
   const [baseFee, setBaseFee] = useState<string | null>(null);
-
-  // --- Stato wallet modal ---
+  
   const [availableWallets, setAvailableWallets] = useState<EIP6963ProviderDetail[]>([]);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
-  const creationSectionRef = useRef<HTMLDivElement>(null);
-
-  // --- Read-only provider ---
+  // Initialize read-only provider
   useEffect(() => {
     const provider = new JsonRpcProvider('https://base.publicnode.com', 8453);
     setReadOnlyProvider(provider);
 
-    // EIP-6963 discovery
+    // Listen for EIP-6963 wallets
     const onAnnounceProvider = (event: EIP6963AnnounceProviderEvent) => {
       setAvailableWallets(prev => {
         if (prev.some(p => p.info.uuid === event.detail.info.uuid)) return prev;
@@ -55,19 +35,14 @@ const App: React.FC = () => {
     };
 
     window.addEventListener('eip6963:announceProvider', onAnnounceProvider);
-    announceProvider();
+    window.dispatchEvent(new Event('eip6963:requestProvider'));
 
     return () => {
       window.removeEventListener('eip6963:announceProvider', onAnnounceProvider);
     };
   }, []);
 
-  // --- Connect wallet ---
-  const handleConnectWallet = () => {
-    setIsWalletModalOpen(true);
-    setConnectionError(null);
-  };
-
+  // Connect wallet using EIP-6963
   const handleSelectWallet = async (wallet: EIP6963ProviderDetail) => {
     setIsConnecting(true);
     setConnectionError(null);
@@ -76,9 +51,9 @@ const App: React.FC = () => {
       const signer = await newProvider.getSigner();
       const address = await signer.getAddress();
 
-      // Gas-free signature to prove ownership
+      // Optional: signature to prove ownership
       const nonce = new Date().getTime().toString();
-      const message = createSignatureMessage(nonce);
+      const message = `Sign this message to connect your wallet securely. Nonce: ${nonce}`;
       await signer.signMessage(message);
 
       setAccountAddress(address);
@@ -86,19 +61,14 @@ const App: React.FC = () => {
       setIsWalletModalOpen(false);
     } catch (error: any) {
       console.error("Wallet connection error:", error);
-      let message = "Failed to connect wallet. Please try again.";
       if (error.code === 4001 || (error.message && error.message.toLowerCase().includes('user rejected'))) {
-        message = "Connection request cancelled in wallet.";
+        setConnectionError("Connection request cancelled in wallet.");
+      } else {
+        setConnectionError("Failed to connect wallet. Please try again.");
       }
-      setConnectionError(message);
     } finally {
       setIsConnecting(false);
     }
-  };
-
-  const handleCloseWalletModal = () => {
-    setIsWalletModalOpen(false);
-    setConnectionError(null);
   };
 
   const handleDisconnect = () => {
@@ -106,12 +76,17 @@ const App: React.FC = () => {
     setProvider(null);
   };
 
-  const handleScrollToCreation = () => {
-    creationSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const handleConnectWallet = () => {
+    setIsWalletModalOpen(true);
   };
 
-  // --- Fetch tokens ---
-  const fetchTokensFromAllTokensArray = useCallback(async () => {
+  const handleCloseWalletModal = () => {
+    setIsWalletModalOpen(false);
+    setConnectionError(null);
+  };
+
+  // Fetch tokens from blockchain
+  const fetchTokens = useCallback(async () => {
     if (!readOnlyProvider) return;
 
     setIsLoadingTokens(true);
@@ -133,13 +108,11 @@ const App: React.FC = () => {
       for (let i = 0; i < totalTokens; i += BATCH_SIZE) {
         const batchPromises: Promise<string>[] = [];
         const end = Math.min(i + BATCH_SIZE, totalTokens);
-        for (let j = i; j < end; j++) {
-          batchPromises.push(contract.allTokens(j));
-        }
+        for (let j = i; j < end; j++) batchPromises.push(contract.allTokens(j));
 
         const tokenAddresses = await Promise.all(batchPromises);
 
-        const detailPromises = tokenAddresses.map(async (address: string): Promise<Token | null> => {
+        const detailPromises = tokenAddresses.map(async (address): Promise<Token | null> => {
           try {
             const tokenContract = new Contract(address, erc20ABI, readOnlyProvider);
             const [name, symbol, supply] = await Promise.all([
@@ -148,84 +121,40 @@ const App: React.FC = () => {
               tokenContract.totalSupply(),
             ]);
 
-            return {
-              address,
-              name,
-              symbol,
-              supply: supply.toString(),
-              creator: 'N/A',
-              timestamp: undefined,
-            };
-          } catch (error) {
-            console.error(`Error fetching details for token ${address}:`, error);
+            return { address, name, symbol, supply: supply.toString(), creator: 'N/A', timestamp: undefined };
+          } catch {
             return null;
           }
         });
 
         const resolvedTokens = await Promise.all(detailPromises);
-        const validTokensInBatch = resolvedTokens.filter((t): t is Token => t !== null);
-        fetchedTokens.push(...validTokensInBatch);
+        fetchedTokens.push(...resolvedTokens.filter(t => t !== null) as Token[]);
       }
 
       setTokens(fetchedTokens.reverse());
     } catch (error: any) {
-      console.error("Error fetching tokens from allTokens array:", error);
-      setTokensError(error.message || 'An unexpected error occurred. Please try again.');
+      console.error("Error fetching tokens:", error);
+      setTokensError(error.message || 'Unexpected error fetching tokens.');
     } finally {
       setIsLoadingTokens(false);
     }
   }, [readOnlyProvider, baseFee]);
 
   useEffect(() => {
-    if (readOnlyProvider) {
-      fetchTokensFromAllTokensArray();
-    }
-  }, [readOnlyProvider, fetchTokensFromAllTokensArray]);
+    if (readOnlyProvider) fetchTokens();
+  }, [readOnlyProvider, fetchTokens]);
 
-  // --- Listen for new tokens ---
   const onTokenCreated = useCallback(() => {
-    setTimeout(fetchTokensFromAllTokensArray, 1000);
-  }, [fetchTokensFromAllTokensArray]);
-
-  useEffect(() => {
-    if (!readOnlyProvider) return;
-    const contract = new Contract(contractAddress, contractABI, readOnlyProvider);
-
-    const handleNewToken = () => {
-      onTokenCreated();
-    };
-
-    contract.on('TokenCreated', handleNewToken);
-    return () => {
-      contract.removeAllListeners('TokenCreated');
-    };
-  }, [readOnlyProvider, onTokenCreated]);
-
-  // --- Listen for account changes ---
-  useEffect(() => {
-    const handleAccountsChanged = (accounts: string[]) => {
-      if (accounts.length > 0) {
-        setAccountAddress(accounts[0]);
-      } else {
-        setAccountAddress(null);
-        setProvider(null);
-      }
-    };
-
-    if (provider?.provider.on) {
-      provider.provider.on('accountsChanged', handleAccountsChanged);
-    }
-
-    return () => {
-      if (provider?.provider.removeListener) {
-        provider.provider.removeListener('accountsChanged', handleAccountsChanged);
-      }
-    };
-  }, [provider]);
+    setTimeout(fetchTokens, 1000);
+  }, [fetchTokens]);
 
   return (
     <div className="min-h-screen bg-background font-sans">
-      <Header onConnectWallet={handleConnectWallet} accountAddress={accountAddress} onDisconnect={handleDisconnect} />
+      <Header 
+        onConnectWallet={handleConnectWallet} 
+        accountAddress={accountAddress} 
+        onDisconnect={handleDisconnect} 
+      />
       <main className="container mx-auto px-4 py-12 md:py-16">
         <h1 className="text-4xl md:text-5xl font-bold text-center font-display mb-10 animate-fade-in">
           <span className="bg-gradient-to-r from-gradient-start to-gradient-end bg-clip-text text-transparent">
@@ -233,33 +162,24 @@ const App: React.FC = () => {
           </span>
         </h1>
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          <div className="lg:col-span-3" ref={creationSectionRef}>
-            <TokenCreation
-              accountAddress={accountAddress}
-              provider={provider}
+          <div className="lg:col-span-3">
+            <TokenCreation 
+              accountAddress={accountAddress} 
+              provider={provider} 
               baseFee={baseFee}
               onTokenCreated={onTokenCreated}
             />
           </div>
           <div className="lg:col-span-2">
-            <LatestTokens
-              tokens={tokens}
-              isLoading={isLoadingTokens}
+            <LatestTokens 
+              tokens={tokens} 
+              isLoading={isLoadingTokens} 
               error={tokensError}
-              onRetry={fetchTokensFromAllTokensArray}
+              onRetry={fetchTokens}
             />
           </div>
         </div>
       </main>
-      <footer className="text-center py-6 mt-8">
-        <p className="text-text-secondary text-sm">
-          Contract address: 
-          <a href={`https://basescan.org/address/${contractAddress}`} target="_blank" rel="noopener noreferrer" className="font-mono text-primary hover:underline ml-2">
-            {contractAddress}
-          </a>
-          <span className="text-green-500 ml-1 inline-block" title="Verified">✓</span>
-        </p>
-      </footer>
       <WalletSelectionModal
         isOpen={isWalletModalOpen}
         onClose={handleCloseWalletModal}
