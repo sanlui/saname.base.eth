@@ -1,0 +1,13 @@
+{
+  "accountAssociation": {
+    "farcasterAddress": "0x00294e084a594b6b4baf5395134cfbf853e39240"
+  },
+  "miniapp": {
+    "name": "Disrole MiniApp",
+    "description": "Mini app su Base integrata con Farcaster",
+    "url": "https://www.disrole.com/"
+  },
+  "baseBuilder": {
+    "ownerAddress": "0xda37B36172f3204eB597fB1e5C4Cb85e0c3A048A"
+  }
+}
