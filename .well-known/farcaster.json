@@ -5,11 +5,16 @@
     "signature": ""
   },
   "miniapp": {
+    "version": "1",
     "name": "Disrole",
+    "homeUrl": "https://disrole.com",
+    "iconUrl": "https://disrole.com/icon.png",
+    "splashImageUrl": "https://disrole.com/splash.png",
+    "splashBackgroundColor": "#000000",
     "description": "Your AI Ad Companion",
-    "url": "https://disrole.com/"
+    "primaryCategory": "social"
   },
   "baseBuilder": {
-    "ownerAddress": "0x00294e084a594b6b4baf5395134cfbf853e39240"
+    "ownerAddress": "0x571933c4F5A84604F8c800B4D9E7D75a8a5927ce"
   }
 }
