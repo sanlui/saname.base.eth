@@ -7,11 +7,11 @@
   "frame": {
     "version": "1",
     "name": "Example Frame",
-    "iconUrl": "https://disrole.com/icon.png",
+    "iconUrl": "https://via.placeholder.com/1024.png",
     "homeUrl": "https://disrole.com",
-    "imageUrl": "https://disrole.com/image.png",
+    "imageUrl": "https://via.placeholder.com/1200x630.png",
     "buttonTitle": "Check this out",
-    "splashImageUrl": "https://disrole.com/splash.png",
+    "splashImageUrl": "https://via.placeholder.com/200.png",
     "splashBackgroundColor": "#eeccff",
     "webhookUrl": "https://disrole.com/api/webhook"
   }
