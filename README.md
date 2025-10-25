@@ -1,7 +1,8 @@
 # 🪙 Disrole  
 ### The easiest way to **create and manage ERC-20 tokens on Base**
 
-![Social Preview]([./social-preview.svg](https://x.com/50Buiz))
+[Follow me on X (Twitter)](https://x.com/50Buiz)
+
 
 🌍 **Live App:** [https://www.disrole.com/](https://www.disrole.com/)
 
