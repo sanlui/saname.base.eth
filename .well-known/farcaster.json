@@ -1,0 +1,15 @@
+{
+  "accountAssociation": {
+    "header": "",
+    "payload": "",
+    "signature": ""
+  },
+  "miniapp": {
+    "name": "Disrole",
+    "description": "Your AI Ad Companion",
+    "url": "https://disrole.com/"
+  },
+  "baseBuilder": {
+    "ownerAddress": "0xda37B36172f3204eB597fB1e5C4Cb85e0c3A048A"
+  }
+}
