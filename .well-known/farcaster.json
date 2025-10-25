@@ -1,20 +1,18 @@
 {
   "accountAssociation": {
-    "header": "",
-    "payload": "",
-    "signature": ""
+    "header": "eyJmaWQiOjk5NDM4MiwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDk1Mjk3ZDQ3NzQwQzUyOENlNDllNjJiRjAyNEVBMTc0OTc5QTY1NWMifQ",
+    "payload": "eyJkb21haW4iOiJkaXNyb2xlLmNvbSJ9",
+    "signature": "9Eb58l0VTsIaS3hmQRJGGXHlCBxnDM484qzdttmtDqNHF15fzoLw9zbklGh9PYfrQpq9LxMSWZMtJR1jmtOGDhw="
   },
-  "miniapp": {
+  "frame": {
     "version": "1",
-    "name": "Disrole",
-    "homeUrl": "https://disrole.com",
+    "name": "Example Frame",
     "iconUrl": "https://disrole.com/icon.png",
+    "homeUrl": "https://disrole.com",
+    "imageUrl": "https://disrole.com/image.png",
+    "buttonTitle": "Check this out",
     "splashImageUrl": "https://disrole.com/splash.png",
-    "splashBackgroundColor": "#000000",
-    "description": "Your AI Ad Companion",
-    "primaryCategory": "social"
-  },
-  "baseBuilder": {
-    "ownerAddress": "0x571933c4F5A84604F8c800B4D9E7D75a8a5927ce"
+    "splashBackgroundColor": "#eeccff",
+    "webhookUrl": "https://disrole.com/api/webhook"
   }
 }
