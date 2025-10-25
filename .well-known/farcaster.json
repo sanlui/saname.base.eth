@@ -1,10 +1,12 @@
 {
   "accountAssociation": {
-    "farcasterAddress": "0x00294e084a594b6b4baf5395134cfbf853e39240"
+    "header": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "payload": "eyJkb21haW4iOiJkaXNyb2xlLmNvbSIsInR5cGUiOiJtaW5pYXBwIn0...",
+    "signature": "MEYCIQDxX..."
   },
   "miniapp": {
-    "name": "Disrole MiniApp",
-    "description": "Mini app su Base integrata con Farcaster",
+    "name": "Disrole",
+    "description": "Your AI Ad Companion",
     "url": "https://www.disrole.com/"
   },
   "baseBuilder": {
