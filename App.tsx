@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import TokenCreation from './components/TokenCreation';
@@ -8,9 +9,10 @@ import WalletSelectionModal from './components/WalletSelectionModal';
 import { contractAddress, contractABI } from './constants';
 import type { Token, EIP6963ProviderDetail, EIP1193Provider } from './types';
 import { ethers, Contract, BrowserProvider, JsonRpcProvider, Log } from 'ethers';
+// Fix: Import Variants type from framer-motion to resolve type errors.
 import { motion, AnimatePresence, Variants } from 'framer-motion';
-import { sdk } from '@farcaster/miniapp-sdk';
 
+// Extend the Window interface to include properties injected by wallets.
 declare global {
   interface Window {
     ethereum?: EIP1193Provider & { isMetaMask?: boolean };
@@ -18,8 +20,10 @@ declare global {
   }
 }
 
+// Announce that the app is ready to receive wallet provider info
 const announceProvider = () => {
   try {
+    // Dispatch the event only once to avoid redundant announcements.
     if (!window.dispatchedEip6963Request) {
       window.dispatchEvent(new Event('eip6963:requestProvider'));
       window.dispatchedEip6963Request = true;
@@ -46,6 +50,7 @@ Nonce: ${nonce}
 Issued At: ${issuedAt}`;
 };
 
+
 const App: React.FC = () => {
   const [accountAddress, setAccountAddress] = useState<string | null>(null);
   const [provider, setProvider] = useState<BrowserProvider | null>(null);
@@ -64,42 +69,33 @@ const App: React.FC = () => {
 
   const creationSectionRef = useRef<HTMLDivElement>(null);
 
-  // 🔹 Farcaster Mini App: hide splash screen
-  useEffect(() => {
-    const initializeFarcaster = async () => {
-      try {
-        await sdk.actions.ready();
-        console.log("Mini App ready, splash screen hidden!");
-      } catch (error) {
-        console.error("Failed to call sdk.actions.ready():", error);
-      }
-    };
-
-    initializeFarcaster();
-  }, []);
-
   useEffect(() => {
     const provider = new JsonRpcProvider('https://base.publicnode.com', 8453);
     setReadOnlyProvider(provider);
   }, []);
 
+  // EIP-6963 Wallet Discovery
   useEffect(() => {
+    // Filter by rdns for more reliable wallet identification.
     const ALLOWED_WALLETS_RDNS = [
-      'io.metamask',
-      'com.coinbase.wallet',
-      'io.zerion.wallet',
-      'com.okex.wallet',
-      'com.okx.web3.wallet',
-      'me.rainbow'
+      'io.metamask',          // MetaMask
+      'com.coinbase.wallet',  // Base Wallet & Coinbase Wallet
+      'io.zerion.wallet',     // Zerion Wallet
+      'com.okex.wallet',      // OKX Wallet
+      'com.okx.web3.wallet',  // OKX Wallet (alternative rdns)
+      'me.rainbow'            // Rainbow Wallet
     ];
 
     const handleAnnounceProvider = (event: Event) => {
       const providerDetail = (event as CustomEvent<EIP6963ProviderDetail>).detail;
+
+      // Check if the announced wallet's rdns is in the allowed list.
       if (ALLOWED_WALLETS_RDNS.includes(providerDetail.info.rdns)) {
         setWallets(currentWallets => {
           if (currentWallets.some(w => w.info.uuid === providerDetail.info.uuid)) {
             return currentWallets;
           }
+          // Add new wallet and sort alphabetically for consistent display order.
           return [...currentWallets, providerDetail].sort((a, b) => a.info.name.localeCompare(b.info.name));
         });
       }
@@ -112,7 +108,7 @@ const App: React.FC = () => {
       window.removeEventListener('eip6963:announceProvider', handleAnnounceProvider);
     };
   }, []);
-
+  
   const fetchBaseFee = useCallback(async () => {
     if (!readOnlyProvider) return;
     try {
@@ -130,7 +126,11 @@ const App: React.FC = () => {
     try {
       const contract = new Contract(contractAddress, contractABI, readOnlyProvider);
       const badge = await contract.getBadge(address);
-      setUserBadge(badge || null);
+      if (badge) {
+        setUserBadge(badge);
+      } else {
+        setUserBadge(null);
+      }
     } catch (error) {
       console.warn(`Could not fetch badge for ${address}:`, error);
       setUserBadge(null);
@@ -149,6 +149,7 @@ const App: React.FC = () => {
         const chunkSize = 20000;
         let allLogs: Log[] = [];
 
+        // Fetch logs in chunks to avoid provider limits
         for (let fromBlock = Math.max(0, latestBlockNumber - 200000); fromBlock <= latestBlockNumber; fromBlock += chunkSize) {
             const toBlock = Math.min(fromBlock + chunkSize - 1, latestBlockNumber);
             try {
@@ -167,6 +168,7 @@ const App: React.FC = () => {
             const tokenAddress = args.tokenAddress;
             const localMeta = localMetadata[tokenAddress.toLowerCase()] || {};
             
+            // Fetch badge for each creator
             let badge;
             try {
                 badge = await contract.getBadge(args.creator);
@@ -183,7 +185,7 @@ const App: React.FC = () => {
                 supply: args.supply.toString(),
                 timestamp: block ? block.timestamp * 1000 : undefined,
                 txHash: log.transactionHash,
-                decimals: 18,
+                decimals: 18, // All tokens created have 18 decimals by default
                 website: localMeta.website,
                 twitter: localMeta.twitter,
                 telegram: localMeta.telegram,
@@ -209,7 +211,9 @@ const App: React.FC = () => {
 
   const handleTokenCreated = () => {
     fetchTokens();
-    if (accountAddress) fetchUserBadge(accountAddress);
+    if (accountAddress) {
+        fetchUserBadge(accountAddress);
+    }
   };
 
   const handleTokenCreatedWithMetadata = (token: Token) => {
@@ -222,6 +226,7 @@ const App: React.FC = () => {
         description: token.description,
       }
     }));
+    // We don't need to call fetchTokens here, it will be called by handleTokenCreated
   };
 
   const handleConnectWallet = () => {
@@ -234,12 +239,15 @@ const App: React.FC = () => {
     setConnectionError(null);
     try {
         let browserProvider = new BrowserProvider(wallet.provider);
+        
         const network = await browserProvider.getNetwork();
         if (network.chainId !== 8453n) {
           try {
             await browserProvider.send('wallet_switchEthereumChain', [{ chainId: '0x2105' }]);
+            // After switching, create a new provider instance to reflect the new chain.
             browserProvider = new BrowserProvider(wallet.provider);
           } catch (switchError: any) {
+            // Error code 4902 indicates the chain has not been added to the wallet.
             if (switchError.code === 4902) {
               await browserProvider.send('wallet_addEthereumChain', [{
                 chainId: '0x2105',
@@ -248,17 +256,23 @@ const App: React.FC = () => {
                 rpcUrls: ['https://mainnet.base.org'],
                 blockExplorerUrls: ['https://basescan.org']
               }]);
+              // Also create a new provider instance after adding and switching.
               browserProvider = new BrowserProvider(wallet.provider);
-            } else throw switchError;
+            } else {
+              throw switchError;
+            }
           }
         }
         
+        // Use getSigner() to prompt for connection and get the signer. This is more robust.
         const signer = await browserProvider.getSigner();
         const address = await signer.getAddress();
 
         if (address) {
+            // Re-fetch network info after potential switch to ensure correct chainId in signature.
             const currentNetwork = await browserProvider.getNetwork();
-            const nonce = window.crypto.randomUUID();
+            // Gas-free signature to prove ownership with an EIP-4361 inspired message for enhanced security.
+            const nonce = window.crypto.randomUUID(); // Cryptographically secure random nonce
             const message = createSignatureMessage(address, Number(currentNetwork.chainId), nonce);
             await signer.signMessage(message);
 
@@ -291,24 +305,40 @@ const App: React.FC = () => {
     creationSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
+  // Fix: Explicitly type variants with the Variants type to fix type inference issues.
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: { staggerChildren: 0.2 }
+      transition: {
+        staggerChildren: 0.2
+      }
     }
   };
 
+  // Fix: Explicitly type variants with the Variants type to fix type inference issue with the 'ease' property.
   const itemVariants: Variants = {
     hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1, transition: { duration: 0.6, ease: 'easeOut' } }
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        duration: 0.6,
+        ease: 'easeOut'
+      }
+    }
   };
   
   return (
     <div className="flex flex-col min-h-screen">
       <Header onConnectWallet={handleConnectWallet} accountAddress={accountAddress} onDisconnect={handleDisconnect} userBadge={userBadge} />
       <main className="flex-grow container mx-auto px-4 py-12 md:py-20">
-        <motion.div className="max-w-7xl mx-auto" variants={containerVariants} initial="hidden" animate="visible">
+        <motion.div 
+          className="max-w-7xl mx-auto"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
           <motion.div variants={itemVariants} className="text-center mb-20">
               <h1 className="text-5xl md:text-7xl font-black font-display mb-6 leading-tight bg-gradient-to-r from-gradient-start to-gradient-end text-transparent bg-clip-text">
                   Launch on Base. Instantly.
@@ -327,7 +357,9 @@ const App: React.FC = () => {
               </motion.button>
           </motion.div>
           
-          <motion.div variants={itemVariants}><Features /></motion.div>
+          <motion.div variants={itemVariants}>
+            <Features />
+          </motion.div>
 
           <motion.div ref={creationSectionRef} className="grid grid-cols-1 lg:grid-cols-5 gap-10 my-16 pt-16" variants={itemVariants}>
             <div className="lg:col-span-3">
