@@ -7,11 +7,11 @@
   "frame": {
     "version": "1",
     "name": "Disrole - Token Factory on Base",
-    "iconUrl": "/logo.png",
+    "iconUrl": "https://www.disrole.com/logo.png",
     "homeUrl": "https://www.disrole.com",
-    "imageUrl": "/social-preview.png",
+    "imageUrl": "https://www.disrole.com/social-preview.png",
     "buttonTitle": "Launch Your Token",
-    "splashImageUrl":"/splash.png",
+    "splashImageUrl": "https://www.disrole.com/splash.png",
     "splashBackgroundColor": "#0d0d0d",
     "webhookUrl": "https://www.disrole.com/api/webhook"
   }
