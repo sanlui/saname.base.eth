@@ -1,4 +1,11 @@
 {
+  "name": "disrole-token-factory",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Token Factory on Base - Create tokens instantly on Base network",
+  "baseBuilder": {
+    "ownerAddress": "0xda37B36172f3204eB597fB1e5C4Cb85e0c3A048A"
+  },
   "accountAssociation": {
     "header": "eyJmaWQiOjk5NDM4MiwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDk1Mjk3ZDQ3NzQwQzUyOENlNDllNjJiRjAyNEVBMTc0OTc5QTY1NWMifQ",
     "payload": "eyJkb21haW4iOiJkaXNyb2xlLmNvbSJ9",
@@ -14,5 +21,24 @@
     "splashImageUrl": "https://www.disrole.com/splash.png",
     "splashBackgroundColor": "#0d0d0d",
     "webhookUrl": "https://www.disrole.com/api/webhook"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "npm run build && base-builder deploy"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "ethers": "^6.10.0",
+    "framer-motion": "^10.16.4"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.1.0",
+    "typescript": "^5.0.0",
+    "vite": "^4.4.0"
   }
 }
