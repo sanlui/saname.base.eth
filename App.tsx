@@ -11,7 +11,7 @@ import type { Token, EIP6963ProviderDetail, EIP1193Provider } from './types';
 import { ethers, Contract, BrowserProvider, JsonRpcProvider, Log } from 'ethers';
 // Fix: Import Variants type from framer-motion to resolve type errors.
 import { motion, AnimatePresence, Variants } from 'framer-motion';
-
+import { sdk } from '@farcaster/miniapp-sdk'; 
 // Extend the Window interface to include properties injected by wallets.
 declare global {
   interface Window {
