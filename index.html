@@ -1,18 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-ar" />
+    <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Disrole | Create ERC20 Tokens on Base Network Instantly</title>
     <meta name="description" content="Deploy your own ERC20 token on the Base Network using Disrole. A user-friendly, no-code tool that provides full contract ownership. Secure and efficient deployment." />
     <meta name="keywords" content="disrole, create token, base network, erc20 token, launch cryptocurrency, crypto token creator, no-code crypto, base blockchain, token generator" />
     
+    <!-- Base Builder Meta Tags -->
+    <meta name="base-builder:version" content="1" />
+    <meta name="base-builder:name" content="Disrole - Token Factory on Base" />
+    <meta name="base-builder:iconUrl" content="https://www.disrole.com/logo.png" />
+    <meta name="base-builder:homeUrl" content="https://www.disrole.com" />
+    <meta name="base-builder:imageUrl" content="https://www.disrole.com/social-preview.png" />
+    <meta name="base-builder:buttonTitle" content="Launch Your Token" />
+    <meta name="base-builder:splashImageUrl" content="https://www.disrole.com/splash.png" />
+    <meta name="base-builder:splashBackgroundColor" content="#0d0d0d" />
+    <meta name="base-builder:webhookUrl" content="https://www.disrole.com/api/webhook" />
+    <meta name="base-builder:subtitle" content="Instant Token Creation on Base" />
+    <meta name="base-builder:description" content="Deploy your custom ERC-20 token in seconds with our gas-optimized smart contract. No coding required, full ownership on Base network." />
+    <meta name="base-builder:primaryCategory" content="defi" />
+    <meta name="base-builder:tags" content="tokens,defi,base,erc20,creation" />
+    <meta name="base-builder:heroImageUrl" content="https://www.disrole.com/hero.png" />
+    <meta name="base-builder:tagline" content="Your Token, Deployed in 60 Seconds" />
+    
+    <!-- Farcaster Frame Meta Tags -->
+    <meta property="fc:frame" content="vNext" />
+    <meta property="fc:frame:image" content="https://www.disrole.com/social-preview.png" />
+    <meta property="fc:frame:button:1" content="Launch Your Token" />
+    <meta property="fc:frame:post_url" content="https://www.disrole.com/api/frame" />
+    
+    <!-- Farcaster Mini App Meta Tag -->
+    <meta
+      name="fc:miniapp"
+      content='{
+        "version": "next",
+        "imageUrl": "https://www.disrole.com/social-preview.png",
+        "button": {
+          "title": "Launch Your Token",
+          "action": {
+            "type": "launch_frame",
+            "url": "https://www.disrole.com"
+          }
+        }
+      }'
+    />
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://www.disrole.com/">
     <meta property="og:title" content="Disrole | Create ERC20 Tokens on Base Network Instantly">
     <meta property="og:description" content="Deploy your own ERC20 token on the Base Network using Disrole. A user-friendly, no-code tool that provides full contract ownership. Secure and efficient deployment.">
     <meta property="og:image" content="https://www.disrole.com/social-preview.png">
+    <meta property="og:site_name" content="Disrole Token Factory">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
@@ -20,14 +60,23 @@
     <meta property="twitter:title" content="Disrole | Create ERC20 Tokens on Base Network Instantly">
     <meta property="twitter:description" content="Deploy your own ERC20 token on the Base Network using Disrole. A user-friendly, no-code tool that provides full contract ownership. Secure and efficient deployment.">
     <meta property="twitter:image" content="https://www.disrole.com/social-preview.png">
+    <meta property="twitter:creator" content="@disrole">
 
+    <!-- Additional Security & SEO Meta Tags -->
     <meta name="sicurezza" content="verifica-ssl">
+    <meta name="theme-color" content="#0052FF">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="Disrole">
 
+    <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230052FF'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-size='60' font-family='Inter, sans-serif' font-weight='900' fill='white'%3ED%3C/text%3E%3C/svg%3E">
 
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Theme Script -->
     <script>
       // Avoids FOUC (Flash of Unstyled Content) by applying theme before page load
       if (localStorage.theme === 'dark') {
@@ -35,7 +84,36 @@
       } else {
         document.documentElement.classList.remove('dark');
       }
+      
+      // Base Builder & Farcaster detection
+      if (typeof window !== 'undefined') {
+        // Check for Base Builder environment
+        const isBaseBuilder = 
+          window.location.hostname.includes('base.org') ||
+          window.location.hostname.includes('basebuilder') ||
+          navigator.userAgent.includes('BaseBuilder') ||
+          document.referrer.includes('base.org');
+        
+        // Check for Farcaster environment
+        const isFarcaster = 
+          window.location.hostname.includes('warpcast') ||
+          navigator.userAgent.includes('Farcaster') ||
+          document.referrer.includes('warpcast') ||
+          window.fcWidget !== undefined;
+        
+        if (isBaseBuilder) {
+          console.log('🏗️ Base Builder environment detected');
+          document.documentElement.setAttribute('data-base-builder', 'true');
+        }
+        
+        if (isFarcaster) {
+          console.log('📱 Farcaster environment detected');
+          document.documentElement.setAttribute('data-farcaster', 'true');
+        }
+      }
     </script>
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -84,6 +162,8 @@
         }
       }
     </script>
+
+    <!-- Custom Styles -->
     <style>
       :root {
         --color-background: #F0F4F8;
@@ -123,25 +203,60 @@
         background-image: radial-gradient(circle at 20% 20%, rgba(0, 82, 255, 0.15) 0%, transparent 40%),
                           radial-gradient(circle at 80% 90%, rgba(196, 47, 205, 0.1) 0%, transparent 40%);
       }
+      
+      /* Base Builder specific styles */
+      [data-base-builder="true"] body {
+        background-color: var(--color-background);
+      }
+      
+      /* Farcaster specific styles */
+      [data-farcaster="true"] body {
+        background-color: var(--color-background);
+      }
     </style>
+  </head>
+
+  <!-- Import Map -->
   <script type="importmap">
-{
-  "imports": {
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "ethers": "https://aistudiocdn.com/ethers@^6.15.0",
-    "framer-motion": "https://aistudiocdn.com/framer-motion@^11.3.19",
-    "vite": "https://aistudiocdn.com/vite@^7.1.12",
-    "path": "https://aistudiocdn.com/path@^0.12.7",
-    "fs/": "https://aistudiocdn.com/fs@^0.0.1-security/",
-    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.0.4"
-  }
-}
-</script>
+    {
+      "imports": {
+        "react/": "https://aistudiocdn.com/react@^19.2.0/",
+        "react": "https://aistudiocdn.com/react@^19.2.0",
+        "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+        "ethers": "https://aistudiocdn.com/ethers@^6.15.0",
+        "framer-motion": "https://aistudiocdn.com/framer-motion@^11.3.19",
+        "vite": "https://aistudiocdn.com/vite@^7.1.12",
+        "path": "https://aistudiocdn.com/path@^0.12.7",
+        "fs/": "https://aistudiocdn.com/fs@^0.0.1-security/",
+        "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.0.4"
+      }
+    }
+  </script>
 </head>
+
   <body class="bg-background text-text-primary font-sans">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
+    
+    <!-- Base Builder & Farcaster Integration Script -->
+    <script>
+      // Initialize platform-specific features
+      document.addEventListener('DOMContentLoaded', function() {
+        const isBaseBuilder = document.documentElement.getAttribute('data-base-builder') === 'true';
+        const isFarcaster = document.documentElement.getAttribute('data-farcaster') === 'true';
+        
+        if (isBaseBuilder) {
+          // Base Builder specific initialization
+          console.log('🚀 Initializing Base Builder features...');
+          window.dispatchEvent(new CustomEvent('base-builder:ready'));
+        }
+        
+        if (isFarcaster) {
+          // Farcaster specific initialization
+          console.log('📱 Initializing Farcaster features...');
+          // Farcaster SDK will be initialized in React component
+        }
+      });
+    </script>
   </body>
 </html>
