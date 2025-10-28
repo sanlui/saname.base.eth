@@ -2,7 +2,21 @@
   "name": "disrole-token-factory",
   "version": "1.0.0",
   "type": "module",
-  "description": "Token Factory on Base - Create tokens instantly on Base network",
+  "subtitle": "Instant Token Creator on Base",
+  "description": "Create and deploy ERC-20 tokens instantly on the Base network with Disrole Token Factory. Simple, fast, and decentralized.",
+  "screenshotUrls": [
+    "https://www.disrole.com/screenshots/preview1.png",
+    "https://www.disrole.com/screenshots/preview2.png"
+  ],
+  "primaryCategory": "Blockchain Tools",
+  "tags": [
+    "base",
+    "token-factory",
+    "crypto",
+    "erc20",
+    "builder",
+    "disrole"
+  ],
   "baseBuilder": {
     "ownerAddress": "0xda37B36172f3204eB597fB1e5C4Cb85e0c3A048A"
   },
