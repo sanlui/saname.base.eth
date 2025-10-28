@@ -9,7 +9,6 @@ import { contractAddress, contractABI } from './constants';
 import type { Token, EIP6963ProviderDetail, EIP1193Provider } from './types';
 import { ethers, Contract, BrowserProvider, JsonRpcProvider, Log } from 'ethers';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
-import { sdk } from '@farcaster/miniapp-sdk';
 
 // Extend the Window interface to include properties injected by wallets.
 declare global {
@@ -63,37 +62,8 @@ const App: React.FC = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [localMetadata, setLocalMetadata] = useState<Record<string, Partial<Token>>>({});
   const [userBadge, setUserBadge] = useState<string | null>(null);
-  const [farcasterContext, setFarcasterContext] = useState<any>(null);
 
   const creationSectionRef = useRef<HTMLDivElement>(null);
-
-  // ✅ INIZIALIZZAZIONE FARCASTER - CORRETTA E FUNZIONANTE
-  useEffect(() => {
-    const initializeFarcaster = async () => {
-      try {
-        console.log("🚀 Inizializzazione Farcaster Mini App...");
-        
-        // Questo è il metodo CRITICO che nasconde lo splash screen e inizializza l'SDK
-        const context = await sdk.actions.ready();
-        
-        console.log("✅ Farcaster Mini App inizializzata con successo!", context);
-        setFarcasterContext(context);
-        
-        // Opzionale: Ascolta i cambiamenti di contesto
-        sdk.context.subscribe((newContext) => {
-          console.log("🔄 Contesto Farcaster aggiornato:", newContext);
-          setFarcasterContext(newContext);
-        });
-        
-      } catch (error) {
-        console.error("❌ Errore durante l'inizializzazione di Farcaster:", error);
-        // Anche in caso di errore, prova comunque a procedere con l'app
-        console.log("📱 Continuo senza Farcaster...");
-      }
-    };
-
-    initializeFarcaster();
-  }, []);
 
   // Read-only provider for blockchain queries
   useEffect(() => {
@@ -363,7 +333,6 @@ const App: React.FC = () => {
         accountAddress={accountAddress} 
         onDisconnect={handleDisconnect} 
         userBadge={userBadge}
-        farcasterContext={farcasterContext}
       />
       <main className="flex-grow container mx-auto px-4 py-12 md:py-20">
         <motion.div 
@@ -402,7 +371,6 @@ const App: React.FC = () => {
                 baseFee={baseFee}
                 onTokenCreated={handleTokenCreated}
                 onTokenCreatedWithMetadata={handleTokenCreatedWithMetadata}
-                farcasterContext={farcasterContext}
               />
             </div>
             <div className="lg:col-span-2">
