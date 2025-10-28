@@ -6,13 +6,13 @@
   },
   "frame": {
     "version": "1",
-    "name": "Example Frame",
-    "iconUrl": "https://via.placeholder.com/1024.png",
-    "homeUrl": "https://disrole.com",
-    "imageUrl": "https://via.placeholder.com/1200x630.png",
-    "buttonTitle": "Check this out",
-    "splashImageUrl": "https://via.placeholder.com/200.png",
-    "splashBackgroundColor": "#eeccff",
-    "webhookUrl": "https://disrole.com/api/webhook"
+    "name": "Disrole - Token Factory on Base",
+    "iconUrl": "https://www.disrole.com/logo.png",
+    "homeUrl": "https://www.disrole.com",
+    "imageUrl": "https://www.disrole.com/social-preview.png",
+    "buttonTitle": "Launch Your Token",
+    "splashImageUrl": "https://www.disrole.com/splash.png",
+    "splashBackgroundColor": "#0d0d0d",
+    "webhookUrl": "https://www.disrole.com/api/webhook"
   }
 }
