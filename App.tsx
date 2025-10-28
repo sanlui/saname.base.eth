@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import TokenCreation from './components/TokenCreation';
@@ -8,6 +9,7 @@ import WalletSelectionModal from './components/WalletSelectionModal';
 import { contractAddress, contractABI } from './constants';
 import type { Token, EIP6963ProviderDetail, EIP1193Provider } from './types';
 import { ethers, Contract, BrowserProvider, JsonRpcProvider, Log } from 'ethers';
+// Fix: Import Variants type from framer-motion to resolve type errors.
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 
 // Extend the Window interface to include properties injected by wallets.
@@ -48,6 +50,7 @@ Nonce: ${nonce}
 Issued At: ${issuedAt}`;
 };
 
+
 const App: React.FC = () => {
   const [accountAddress, setAccountAddress] = useState<string | null>(null);
   const [provider, setProvider] = useState<BrowserProvider | null>(null);
@@ -57,6 +60,7 @@ const App: React.FC = () => {
   const [tokensError, setTokensError] = useState<string | null>(null);
   const [baseFee, setBaseFee] = useState<string | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  
   const [wallets, setWallets] = useState<EIP6963ProviderDetail[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -65,7 +69,6 @@ const App: React.FC = () => {
 
   const creationSectionRef = useRef<HTMLDivElement>(null);
 
-  // Read-only provider for blockchain queries
   useEffect(() => {
     const provider = new JsonRpcProvider('https://base.publicnode.com', 8453);
     setReadOnlyProvider(provider);
@@ -328,12 +331,7 @@ const App: React.FC = () => {
   
   return (
     <div className="flex flex-col min-h-screen">
-      <Header 
-        onConnectWallet={handleConnectWallet} 
-        accountAddress={accountAddress} 
-        onDisconnect={handleDisconnect} 
-        userBadge={userBadge}
-      />
+      <Header onConnectWallet={handleConnectWallet} accountAddress={accountAddress} onDisconnect={handleDisconnect} userBadge={userBadge} />
       <main className="flex-grow container mx-auto px-4 py-12 md:py-20">
         <motion.div 
           className="max-w-7xl mx-auto"
