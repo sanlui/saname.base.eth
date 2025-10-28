@@ -2,9 +2,16 @@
   "name": "disrole-token-factory",
   "version": "1.0.0",
   "type": "module",
-  "description": "Create and deploy your own tokens instantly on Base network",
+  "description": "Token Factory on Base - Create tokens instantly on Base network",
   "baseBuilder": {
-    "ownerAddress": "0xda37B36172f3204eB597fB1e5C4Cb85e0c3A048A",
+    "ownerAddress": "0xda37B36172f3204eB597fB1e5C4Cb85e0c3A048A"
+  },
+  "accountAssociation": {
+    "header": "eyJmaWQiOjk5NDM4MiwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDk1Mjk3ZDQ3NzQwQzUyOENlNDllNjJiRjAyNEVBMTc0OTc5QTY1NWMifQ",
+    "payload": "eyJkb21haW4iOiJkaXNyb2xlLmNvbSJ9",
+    "signature": "9Eb58l0VTsIaS3hmQRJGGXHlCBxnDM484qzdttmtDqNHF15fzoLw9zbklGh9PYfrQpq9LxMSWZMtJR1jmtOGDhw="
+  },
+  "frame": {
     "version": "1",
     "name": "Disrole - Token Factory on Base",
     "iconUrl": "https://www.disrole.com/logo.png",
@@ -13,27 +20,7 @@
     "buttonTitle": "Launch Your Token",
     "splashImageUrl": "https://www.disrole.com/splash.png",
     "splashBackgroundColor": "#0d0d0d",
-    "webhookUrl": "https://www.disrole.com/api/webhook",
-    "subtitle": "Instant Token Creation on Base",
-    "description": "Deploy your custom ERC-20 token in seconds with our gas-optimized smart contract. No coding required, full ownership on Base network.",
-    "screenshotUrls": [
-      "https://www.disrole.com/screenshots/1.png",
-      "https://www.disrole.com/screenshots/2.png",
-      "https://www.disrole.com/screenshots/3.png"
-    ],
-    "primaryCategory": "defi",
-    "tags": ["tokens", "defi", "base", "erc20", "creation"],
-    "heroImageUrl": "https://www.disrole.com/hero.png",
-    "tagline": "Your Token, Deployed in 60 Seconds",
-    "ogTitle": "Disrole - Token Factory on Base",
-    "ogDescription": "Create and deploy your own tokens instantly on Base network. No coding required.",
-    "ogImageUrl": "https://www.disrole.com/og-image.png",
-    "castShareUrl": "https://www.disrole.com"
-  },
-  "accountAssociation": {
-    "header": "eyJmaWQiOjk5NDM4MiwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDk1Mjk3ZDQ3NzQwQzUyOENlNDllNjJiRjAyNEVBMTc0OTc5QTY1NWMifQ",
-    "payload": "eyJkb21haW4iOiJkaXNyb2xlLmNvbSJ9",
-    "signature": "9Eb58l0VTsIaS3hmQRJGGXHlCBxnDM484qzdttmtDqNHF15fzoLw9zbklGh9PYfrQpq9LxMSWZMtJR1jmtOGDhw="
+    "webhookUrl": "https://www.disrole.com/api/webhook"
   },
   "scripts": {
     "dev": "vite",
