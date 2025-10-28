@@ -1,16 +1,20 @@
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { sdk } from '@farcaster/miniapp-sdk';
 
-const rootElement = document.getElementById('root');
-if (!rootElement) {
-  throw new Error("Could not find root element to mount to");
-}
+(async () => {
+  try {
+    await sdk.actions.ready();
+    console.log("Mini App ready, splash screen hidden!");
+  } catch (err) {
+    console.error("Failed to call sdk.actions.ready():", err);
+  }
 
-const root = ReactDOM.createRoot(rootElement);
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+  const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
+  root.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+})();
